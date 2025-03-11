@@ -53,10 +53,10 @@ function Features() {
           <div class=" bg-black text-white rounded-lg px-4 py-2 text-sm">
             Features
           </div>
-          <h2 class="text-3xl font-bold md:text-4xl">
+          <h2 className="text-3xl font-bold md:text-4xl">
             Everything you need to create the perfect resume
           </h2>
-          <p class="max-w-[900px] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+          <p className="max-w-[900px] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
             Our platform provides all the tools you need to build a professional
             resume that gets you noticed by recruiters and hiring managers.
           </p>
