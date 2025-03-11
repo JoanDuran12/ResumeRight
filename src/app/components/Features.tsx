@@ -1,17 +1,17 @@
 import { IconAi } from "@tabler/icons-react";
-import { IconFileDescription } from "@tabler/icons-react";
-import { IconBolt } from "@tabler/icons-react";
-import { IconStack } from "@tabler/icons-react";
-import { IconNotification } from "@tabler/icons-react";
-import { IconStar } from "@tabler/icons-react";
-import { IconChecks } from "@tabler/icons-react";
+import { IconFileDescription } from '@tabler/icons-react';
+import { IconBolt } from '@tabler/icons-react';
+import { IconStack } from '@tabler/icons-react';
+import { IconNotification } from '@tabler/icons-react';
+import { IconStar } from '@tabler/icons-react';
+import { IconChecks } from '@tabler/icons-react';
 
 const FeaturesItems = [
   {
     title: "AI-Powered Content",
     description:
       "Our AI helps you write compelling bullet points and summaries tailored to your target job.",
-    Icon: <IconBolt stroke={2} className="size-8" />,
+    Icon: <IconBolt stroke={2} className="size-8"/>,
   },
   {
     title: "Cover Letter Builder",
@@ -62,8 +62,8 @@ function Features() {
           </p>
         </div>
         <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
-          {FeaturesItems.map((item) => (
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+          {FeaturesItems.map((item, i) => (
+            <div key={i} className="rounded-lg border bg-card text-card-foreground shadow-sm">
               <div className="flex flex-col space-y-1.5 p-6">
                 {item.Icon}
                 <h3 className="text-2xl font-semibold leading-none tracking-tight">

@@ -28,8 +28,8 @@ function Header() {
           <span className="font-bold text-xl">ResumeRight</span>
         </div>
         <nav className="hidden md:flex items-center gap-6">
-          {navItems.map((item) => (
-            <a
+          {navItems.map((item, i) => (
+            <a key={i}
               className="text-sm font-medium hover:underline underline-offset-4"
               href={item.href}
             >
