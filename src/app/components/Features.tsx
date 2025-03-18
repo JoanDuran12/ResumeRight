@@ -1,10 +1,4 @@
-import { IconAi } from "@tabler/icons-react";
-import { IconFileDescription } from '@tabler/icons-react';
-import { IconBolt } from '@tabler/icons-react';
-import { IconStack } from '@tabler/icons-react';
-import { IconNotification } from '@tabler/icons-react';
-import { IconStar } from '@tabler/icons-react';
-import { IconChecks } from '@tabler/icons-react';
+import { IconFileDescription, IconBolt, IconStack, IconNotification, IconStar, IconChecks } from '@tabler/icons-react';
 
 const FeaturesItems = [
   {
@@ -50,7 +44,7 @@ function Features() {
     <section className="w-full py-12 px-24 md:py-12 lg:py-24 xl:py-32">
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          <div class=" bg-black text-white rounded-lg px-4 py-2 text-sm">
+          <div className=" bg-black text-white rounded-lg px-4 py-2 text-sm">
             Features
           </div>
           <h2 className="text-3xl font-bold md:text-4xl">

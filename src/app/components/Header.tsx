@@ -1,4 +1,5 @@
 import { IconFileDescription } from "@tabler/icons-react";
+import Link from "next/link";
 
 const navItems = [
   {
@@ -38,18 +39,21 @@ function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-4">
-          <a
+          <Link 
+            href="/login"
             className="text-sm font-medium hover:underline underline-offset-4 hidden sm:inline-flex"
-            href="#login"
+            target="_blank"
           >
             Log In
-          </a>
-          <a
-            className="border bg-black text-white px-3 py-2 rounded-md text-sm hover:underline underline-offset-4"
-            href=""
-          >
+          </Link>
+          
+          <div className="border bg-black text-white px-3 py-2 rounded-md text-sm hover:underline underline-offset-4">
+            <a              
+              href="#GetStarted"
+            >
             Get Started
-          </a>
+            </a>
+          </div>
         </div>
       </div>
     </header>

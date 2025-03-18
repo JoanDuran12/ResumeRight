@@ -17,7 +17,7 @@ function Component() {
           <div className="flex flex-col gap-2 min-[400px]:flex-row">
             <a
               className="bg-white text-black items-center inline-flex justify-center gap-2 text-sm font-medium hover:underline underline-offset-4 h-11 rounded-md px-8"
-              href=""
+              href="#GetStartedRightNow"
             >
               Get Started Right Now
               <IconCaretRight stroke={2} />

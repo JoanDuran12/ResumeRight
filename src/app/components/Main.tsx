@@ -1,5 +1,4 @@
-import { IconCaretRight } from "@tabler/icons-react";
-import { IconDots } from "@tabler/icons-react";
+import { IconCaretRight, IconDots } from "@tabler/icons-react";
 
 function Main() {
   return (
@@ -18,13 +17,10 @@ function Main() {
               </p>
             </div>
             <div className="flex flex-col gap-2 min-[400px]:flex-row ">
-              <a
-                className="bg-black text-white items-center inline-flex justify-center gap-2 text-sm font-medium hover:underline underline-offset-4 h-11 rounded-md px-8"
-                href=""
-              >
-                Build Your Resume
-                <IconCaretRight stroke={2} />
-              </a>
+            <span className="bg-black text-white items-center inline-flex justify-center gap-2 text-sm font-medium hover:underline underline-offset-4 h-11 rounded-md px-8">
+              Build Your Resume
+              <IconCaretRight stroke={2} />
+            </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <IconDots stroke={2} />
