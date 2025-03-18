@@ -3,14 +3,14 @@ import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCWUVqyD_oEOeQ8TLM21WQiM5cR-nmSi30",
-    authDomain: "resumeright-7b242.firebaseapp.com",
-    projectId: "resumeright-7b242",
-    storageBucket: "resumeright-7b242.firebasestorage.app",
-    messagingSenderId: "996099157912",
-    appId: "1:996099157912:web:ead704a9f6a1bea23ec5ed",
-    measurementId: "G-8TB2SRZLCH"
-}
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+};
 
 if (typeof window !== 'undefined') {
     if (!firebase.apps.length) {
