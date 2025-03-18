@@ -6,8 +6,7 @@ import { signInWithGoogle } from "../firebase/config";
 
 export default function Login() {
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">
-            {/* Back button positioned top left */}
+        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
             <div className="absolute top-4 left-4 m-5">
                 <Link href="/">
                     <button className="text-white/70 hover:text-white flex items-center gap-2">
@@ -24,7 +23,6 @@ export default function Login() {
                     </div>
                     
                     <div className="w-full space-y-4">
-                        {/* Google Sign In Button */}
                         <button 
                             className="flex items-center justify-center gap-2 w-full bg-[#202124] hover:bg-[#303134] text-white py-3 px-4 rounded transition-colors"
                             onClick={async () => {
@@ -46,7 +44,6 @@ export default function Login() {
                             Sign in with Google
                         </button>
                         
-                        {/* Guest Button */}
                         <button 
                             className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded transition-colors"
                             onClick={() => console.log("Continue as guest clicked")}

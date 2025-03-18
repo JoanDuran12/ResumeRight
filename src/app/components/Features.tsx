@@ -41,7 +41,7 @@ const FeaturesItems = [
 
 function Features() {
   return (
-    <section className="w-full py-12 px-24 md:py-12 lg:py-24 xl:py-32">
+    <section className="w-full py-12 px-24 md:py-12 lg:py-24 xl:py-32 flex items-center justify-center">
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className=" bg-black text-white rounded-lg px-4 py-2 text-sm">

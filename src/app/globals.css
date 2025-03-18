@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import '@fontsource-variable/onest';
 
-
 :root {
   --background: #ffffff;
   --foreground: #171717;

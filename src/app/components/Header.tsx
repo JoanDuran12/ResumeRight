@@ -11,8 +11,9 @@ const navItems = [
     href: "#Templates",
   },
   {
-    title: "Pricing",
-    href: "#pricing",
+    title: "Github",
+    href: "https://github.com/JoanDuran12/ResumeRight",
+    target: "_blank",
   },
   {
     title: "FAQ",
@@ -22,17 +23,18 @@ const navItems = [
 
 function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-center">
       <div className="container flex h-16 items-center justify-between px-24">
         <div className="flex items-center gap-2">
           <IconFileDescription stroke={2} className="size-8" />
-          <span className="font-bold text-xl">ResumeRight</span>
+          <Link href="/" className="font-bold text-xl">ResumeRight</Link>
         </div>
         <nav className="hidden md:flex items-center gap-6">
           {navItems.map((item, i) => (
             <a key={i}
               className="text-sm font-medium hover:underline underline-offset-4"
               href={item.href}
+              target={item.target}
             >
               {item.title}
             </a>
