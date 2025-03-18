@@ -33,7 +33,7 @@ function Main() {
             <div className="relative w-full max-w-[500px] ">
               <img
                 className="relative z-10 overflow-hidden rounded-xl bg-background shadow-xl"
-                src="https://kzmjk41548iio6k22oaa.lite.vusercontent.net/placeholder.svg?height=600&width=400"
+                src="https://writelatex.s3.amazonaws.com/published_ver/16158.jpeg?X-Amz-Expires=14400&X-Amz-Date=20250317T031437Z&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAWJBOALPNFPV7PVH5/20250317/us-east-1/s3/aws4_request&X-Amz-SignedHeaders=host&X-Amz-Signature=922112baed75e74dc4d2c6fdd1b66a65f893b5f859032906f2e212cf19a90cd1"
                 alt=""
               />
             </div>
