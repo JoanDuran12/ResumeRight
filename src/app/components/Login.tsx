@@ -1,10 +1,63 @@
 'use client';
-
 import { IconFileDescription } from "@tabler/icons-react";
 import Link from "next/link";
-import { signInWithGoogle } from "../firebase/config";
+import { useRouter } from "next/navigation";
+import { signInWithGoogle, handleRedirectResult } from "../firebase/config";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function Login() {
+    const router = useRouter();
+    const { user, loading } = useAuth();
+    const [authError, setAuthError] = useState<string | null>(null);
+    
+    useEffect(() => {
+        const checkRedirectResult = async () => {
+            console.log("Checking for redirect result");
+            try {
+                const redirectSuccess = await handleRedirectResult();
+                if (redirectSuccess) {
+                    console.log("Redirect sign-in successful");
+                } else {
+                    console.log("No redirect result found or sign-in was unsuccessful");
+                }
+            } catch (error) {
+                console.error("Error handling redirect:", error);
+                setAuthError("Failed to complete the sign-in process. Please try again.");
+            }
+        };
+        
+        if (!user && !loading) {
+            checkRedirectResult();
+        }
+    }, [loading, user]);
+    
+    useEffect(() => {
+        console.log("Auth state changed:", { user, loading });
+        if (user) {
+            console.log("User is signed in:", {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName
+            });
+            router.push("/homepage");
+        }
+    }, [user, loading, router]);
+
+    const handleGoogleSignIn = async () => {
+        console.log("Starting Google sign-in process...");
+        setAuthError(null);
+        
+        try {
+            console.log("Calling signInWithGoogle function");
+            await signInWithGoogle();
+            console.log("Sign-in function completed");
+        } catch (error: any) {
+            console.error("Google sign-in failed with error:", error);
+            setAuthError(error.message || "Failed to sign in with Google");
+        }
+    };
+
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
             <div className="absolute top-4 left-4 m-5">
@@ -19,20 +72,20 @@ export default function Login() {
                 <div className="flex flex-col items-center space-y-10">
                     <div className="flex items-center justify-center">
                         <IconFileDescription stroke={2} className="size-8 mr-3" />
-                        <h1 className="text-3xl font-bold">Welcome back</h1>
+                        <h1 className="text-3xl font-bold">Welcome to ResumeRight</h1>
                     </div>
+                    
+                    {authError && (
+                        <div className="w-full bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                            <p>{authError}</p>
+                        </div>
+                    )}
                     
                     <div className="w-full space-y-4">
                         <button 
                             className="flex items-center justify-center gap-2 w-full bg-[#202124] hover:bg-[#303134] text-white py-3 px-4 rounded transition-colors"
-                            onClick={async () => {
-                                try {
-                                    await signInWithGoogle();
-                                    console.log("Google sign-in clicked");
-                                } catch (error) {
-                                    console.error("Google sign-in failed:", error);
-                                }
-                            }}
+                            onClick={handleGoogleSignIn}
+                            disabled={loading}
                         >
                             <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
                                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -41,15 +94,18 @@ export default function Login() {
                                 <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                                 <path fill="none" d="M0 0h48v48H0z"/>
                             </svg>
-                            Sign in with Google
+                            {loading ? 'Signing In...' : 'Sign in with Google'}
                         </button>
                         
-                        <button 
-                            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded transition-colors"
-                            onClick={() => console.log("Continue as guest clicked")}
-                        >
-                            Continue as Guest
-                        </button>
+                        <Link href="/homepage">
+                            <button 
+                                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded transition-colors"
+                                onClick={() => console.log("Continue as guest clicked")}
+                                disabled={loading}
+                            >
+                                Continue as Guest
+                            </button>
+                        </Link>
                     </div>
                 </div>
             </div>

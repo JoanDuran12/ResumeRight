@@ -1,35 +1,60 @@
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import 'firebase/compat/firestore';
+'use client';
+
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult
+} from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-if (typeof window !== 'undefined') {
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+const signInWithGoogle = async () => {
+  if (typeof window !== 'undefined') {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      return true;
+    } catch (error) {
+      console.error("Error during Google sign-in:", error);
+      return false;
     }
-}
-
-export const auth = typeof window !== 'undefined' ? firebase.auth() : null;
-
-const provider = typeof window !== 'undefined' ? new firebase.auth.GoogleAuthProvider() : null;
-if (provider) {
-    provider.setCustomParameters({ prompt: 'select_account' });
-}
-
-export const signInWithGoogle = () => {
-    if (auth && provider) {
-        return auth.signInWithRedirect(provider);
-    }
-    throw new Error('Firebase auth not initialized');
+  }
+  throw new Error('Firebase auth not initialized or not in browser environment');
 };
 
-export default firebase;
+const handleRedirectResult = async () => {
+  if (typeof window !== 'undefined') {
+    try {
+      const result = await getRedirectResult(auth);
+      if (result) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error handling redirect result:", error);
+      return false;
+    }
+  }
+  return false;
+};
+
+export { app, auth, db, signInWithGoogle, handleRedirectResult };

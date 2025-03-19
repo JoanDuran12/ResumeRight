@@ -8,7 +8,7 @@ function Footer() {
         <span className="font-bold text-xl">ResumeRight</span>
       </div>
       <div className="items-center text-sm ">
-        2025 ResumeRight
+        © 2025 ResumeRight
       </div>
     </footer>
   );
