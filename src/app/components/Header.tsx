@@ -1,9 +1,10 @@
 'use client'
 
-import { IconFileDescription } from "@tabler/icons-react";
+import { IconFileDescription, IconSun, IconMoon } from "@tabler/icons-react";
 import Link from "next/link";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useState, useRef, useEffect } from "react";
+import { useTheme } from "@/app/contexts/ThemeContext";
 
 const navItems = [
   {
@@ -27,6 +28,7 @@ const navItems = [
 
 function Header() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   useEffect(() => {
@@ -66,6 +68,19 @@ function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-4">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? (
+              <IconSun size={20} className="text-yellow-500" />
+            ) : (
+              <IconMoon size={20} className="text-gray-700" />
+            )}
+          </button>
+
           {user ? (
             <>
               <Link href="/homepage" className="hidden sm:block">

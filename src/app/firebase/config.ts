@@ -6,7 +6,8 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   signInWithRedirect,
-  getRedirectResult
+  getRedirectResult,
+  deleteUser
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
@@ -57,4 +58,22 @@ const handleRedirectResult = async () => {
   return false;
 };
 
-export { app, auth, db, signInWithGoogle, handleRedirectResult };
+const deleteUserAccount = async () => {
+  if (typeof window !== 'undefined') {
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await deleteUser(currentUser);
+        return true;
+      } else {
+        throw new Error('No user is currently signed in');
+      }
+    } catch (error) {
+      console.error("Error deleting user account:", error);
+      return false;
+    }
+  }
+  throw new Error('Firebase auth not initialized or not in browser environment');
+};
+
+export { app, auth, db, signInWithGoogle, handleRedirectResult, deleteUserAccount};
