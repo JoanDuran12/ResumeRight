@@ -9,19 +9,90 @@ import Footer from "../components/Footer";
 function ResumeBuilder() {
   const [activeTab, setActiveTab] = useState("personal");
 
-  // State for projects
-  const [projects, setProjects] = useState([
+  // Define the tabs in order
+  const tabs = ["personal", "experience", "projects", "education", "skills"];
+
+  // Function to go to the next tab
+  const goToNextTab = () => {
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1]);
+    }
+  };
+
+  // Function to go to the previous tab
+  const goToPreviousTab = () => {
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1]);
+    }
+  };
+
+  const [personalInfo, setPersonalInfo] = useState({
+    name: "John Doe",
+    title: "Software Engineer",
+    email: "john.doe@example.com",
+    phone: "(123) 456-7890",
+    location: "New York, NY",
+    summary:
+      "Experienced software engineer with a passion for building scalable web applications.",
+    linkedin: "https://linkedin.com/in/johndoe",
+    website: "https://johndoe.com",
+    github: "https://github.com/johndoe.com",
+  });
+
+  const [experience, setExperiences] = useState([
     {
-      projectName: "",
-      projectLink: "",
-      startDate: "",
-      endDate: "",
-      description: "",
-      technologies: "",
+      companyName: "Tech Company",
+      location: "New York, NY",
+      startDate: "2020-01",
+      endDate: "Present",
+      position: "Senior Developer",
+      descriptions:
+        "Led development of key features for the company's main product.",
     },
   ]);
 
-  // Function to add a new project
+  const addExperience = () => {
+    setExperiences((prev) => [
+      ...prev,
+      {
+        companyName: "",
+        location: "",
+        startDate: "",
+        endDate: "",
+        position: "",
+        descriptions: "",
+      },
+    ]);
+  };
+
+  // Function to update a project
+  const updateExperience = (index: number, field: string, value: string) => {
+    setExperiences((prev) =>
+      prev.map((experience, i) =>
+        i === index ? { ...experience, [field]: value } : experience
+      )
+    );
+  };
+
+  // Function to remove a project
+  const removeExperience = (index: number) => {
+    setExperiences((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const [projects, setProjects] = useState([
+    {
+      projectName: "Example 1",
+      projectLink: "www.example.com",
+      startDate: "2014-09",
+      endDate: "2018-05",
+      achivements:
+        "Graduated with honors. Focused on software engineering and data structures.",
+      technologies: "JavaScript, React, Node.js, TypeScript, HTML/CSS",
+    },
+  ]);
+
   const addProject = () => {
     setProjects((prev) => [
       ...prev,
@@ -30,7 +101,7 @@ function ResumeBuilder() {
         projectLink: "",
         startDate: "",
         endDate: "",
-        description: "",
+        achivements: "",
         technologies: "",
       },
     ]);
@@ -50,48 +121,72 @@ function ResumeBuilder() {
     setProjects((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // const [personalInfo, setPersonalInfo] = useState({
-  //   name: "John Doe",
-  //   title: "Software Engineer",
-  //   email: "john.doe@example.com",
-  //   phone: "(123) 456-7890",
-  //   location: "New York, NY",
-  //   summary:
-  //     "Experienced software engineer with a passion for building scalable web applications.",
-  // });
+  const [education, setEducation] = useState([
+    {
+      institution: "University of Technology",
+      degree: "Bachelor of Science in Computer Science",
+      startDate: "2014-09",
+      endDate: "2018-05",
+      description:
+        "Graduated with honors. Focused on software engineering and data structures.",
+    },
+  ]);
 
-  // const [experiences, setExperiences] = useState([
-  //   {
-  //     company: "Tech Company",
-  //     position: "Senior Developer",
-  //     startDate: "2020-01",
-  //     endDate: "Present",
-  //     description:
-  //       "Led development of key features for the company's main product.",
-  //   },
-  // ]);
+  const addEducation = () => {
+    setEducation((prev) => [
+      ...prev,
+      {
+        institution: "",
+        degree: "",
+        startDate: "",
+        endDate: "",
+        description: "",
+      },
+    ]);
+  };
 
-  // const [projects, setProjects] = useState([
-  //   {
-  //     projectName: "Example 1",
-  //     startDate: "2014-09",
-  //     endDate: "2018-05",
-  //     achivements:
-  //       "Graduated with honors. Focused on software engineering and data structures.",
-  //     tools: ["JavaScript", "React", "Node.js", "TypeScript", "HTML/CSS"],
-  //   },
-  // ]);
+  // Function to update a project
+  const updateEducation = (index: number, field: string, value: string) => {
+    setEducation((prev) =>
+      prev.map((edu, i) => (i === index ? { ...edu, [field]: value } : edu))
+    );
+  };
 
-  // const [education, setEducation] = useState([
-  //   {
-  //     institution: "University of Technology",
-  //     degree: "Bachelor of Science in Computer Science",
-  //     startDate: "2014-09",
-  //     endDate: "2018-05",
-  //     description:
-  //       "Graduated with honors. Focused on software engineering and data structures.",
-  //   },
-  // ]);
+  // Function to remove a project
+  const removeEducation = (index: number) => {
+    setEducation((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const [skills, setSkills] = useState([
+    {
+      skillHeader: "Frameworks",
+      skills: "React, Angular, Vue",
+    },
+  ]);
+
+  const addSkills = () => {
+    setSkills((prev) => [
+      ...prev,
+      {
+        skillHeader: "",
+        skills: "",
+      },
+    ]);
+  };
+
+  // Function to update a project
+  const updateSkills = (index: number, field: string, value: string) => {
+    setSkills((prev) =>
+      prev.map((skill, i) =>
+        i === index ? { ...skill, [field]: value } : skill
+      )
+    );
+  };
+
+  // Function to remove a project
+  const removeSkills = (index: number) => {
+    setSkills((prev) => prev.filter((_, i) => i !== index));
+  };
 
   // const [skills, setSkills] = useState([
   //   "JavaScript",
@@ -238,102 +333,156 @@ function ResumeBuilder() {
                 <input
                   className="mb-4 py-2 rounded-md border pl-4"
                   type="text"
+                  value={personalInfo.name}
+                  onChange={(e) =>
+                    setPersonalInfo({ ...personalInfo, name: e.target.value })
+                  }
                 />
                 <label className="mb-1">Email</label>
                 <input
                   className="mb-4 py-2 rounded-md border pl-4"
                   type="email"
-                  name="Email"
-                  id=""
+                  value={personalInfo.email}
+                  onChange={(e) =>
+                    setPersonalInfo({ ...personalInfo, email: e.target.value })
+                  }
                 />
                 <label className="mb-1">Phone</label>
                 <input
                   className="mb-4 py-2 rounded-md border pl-4"
                   type="tel"
-                  name="Phone"
-                  id=""
+                  value={personalInfo.phone}
+                  onChange={(e) =>
+                    setPersonalInfo({ ...personalInfo, phone: e.target.value })
+                  }
                 />
                 <label className="mb-1">Location</label>
                 <input
                   className="mb-4 py-2 rounded-md border pl-4"
                   type="text"
-                  name="Location"
-                  id=""
+                  value={personalInfo.location}
+                  onChange={(e) =>
+                    setPersonalInfo({
+                      ...personalInfo,
+                      location: e.target.value,
+                    })
+                  }
                 />
                 <label className="mb-1">LinkedIn</label>
                 <input
                   className="mb-4 py-2 rounded-md border pl-4"
                   type="url"
                   name="LinkedIn"
-                  id=""
+                  value={personalInfo.linkedin}
+                  onChange={(e) =>
+                    setPersonalInfo({
+                      ...personalInfo,
+                      linkedin: e.target.value,
+                    })
+                  }
                 />
                 <label className="mb-1">Website (Optional)</label>
                 <input
                   className="mb-4 py-2 rounded-md border pl-4"
                   type="url"
-                  name="Website"
-                  id=""
+                  value={personalInfo.website}
+                  onChange={(e) =>
+                    setPersonalInfo({
+                      ...personalInfo,
+                      website: e.target.value,
+                    })
+                  }
                 />
                 <label className="mb-1">Github (Optional)</label>
                 <input
                   className="mb-4 py-2 rounded-md border pl-4"
                   type="url"
-                  name="Github"
-                  id=""
+                  value={personalInfo.github}
+                  onChange={(e) =>
+                    setPersonalInfo({ ...personalInfo, github: e.target.value })
+                  }
                 />
               </div>
             )}
             {/* Experience Tab */}
             {activeTab === "experience" && (
               <div>
-                <div className="flex flex-col rounded-md border bg-white p-8 mb-4 shadow-xs">
-                  <h1 className="font-semibold text-xl mb-6">Experience 1</h1>
-                  <label className="mb-1">Company</label>
-                  <input
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    type="text"
-                    name="Company"
-                    id=""
-                  />
-                  <label className="mb-1">Location</label>
-                  <input
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    type="text"
-                    name="Company"
-                    id=""
-                  />
-                  <label className="mb-1">Position</label>
-                  <input
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    type="text"
-                    name="Position"
-                    id=""
-                  />
-                  <label className="mb-1">Start Date</label>
-                  <input
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    type="date"
-                    name="Start Date"
-                    id=""
-                  />
-                  <label className="mb-1">End Date</label>
-                  <input
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    type="date"
-                    name="End Date"
-                    id=""
-                  />
-                  <label className="mb-1">Description</label>
-                  <textarea
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    name="Description"
-                    id=""
-                  ></textarea>
-                </div>
+                {experience.map((exp, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col rounded-md border bg-white p-8 mb-4 shadow-xs"
+                  >
+                    <div className="flex justify-between flex-wrap">
+                      <h1 className="font-semibold text-xl mb-6">
+                        Experience {index + 1}
+                      </h1>
+                      <a
+                        className="text-sm text-red-500 hover:scale-120 transition ease-in-out"
+                        onClick={() => removeExperience(index)}
+                      >
+                        <IconTrashX stroke={2} />
+                      </a>
+                    </div>
+                    <label className="mb-1">Company</label>
+                    <input
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      type="text"
+                      value={exp.companyName}
+                      onChange={(e) =>
+                        updateExperience(index, "companyName", e.target.value)
+                      }
+                    />
+                    <label className="mb-1">Location</label>
+                    <input
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      type="text"
+                      value={exp.location}
+                      onChange={(e) =>
+                        updateExperience(index, "location", e.target.value)
+                      }
+                    />
+                    <label className="mb-1">Position</label>
+                    <input
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      type="text"
+                      value={exp.position}
+                      onChange={(e) =>
+                        updateExperience(index, "position", e.target.value)
+                      }
+                    />
+                    <label className="mb-1">Start Date</label>
+                    <input
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      type="text"
+                      value={exp.startDate}
+                      onChange={(e) =>
+                        updateExperience(index, "startDate", e.target.value)
+                      }
+                    />
+                    <label className="mb-1">End Date</label>
+                    <input
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      type="text"
+                      value={exp.endDate}
+                      onChange={(e) =>
+                        updateExperience(index, "endDate", e.target.value)
+                      }
+                    />
+                    <label className="mb-1">Description</label>
+                    <textarea
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      name="Description"
+                      value={exp.descriptions}
+                      onChange={(e) =>
+                        updateExperience(index, "descriptions", e.target.value)
+                      }
+                    ></textarea>
+                  </div>
+                ))}
                 <div className="flex justify-between bg-white">
                   <a
                     className="w-full flex items-center justify-center border bg-white text-black px-3 py-2 rounded-md text-sm hover:bg-gray-300 transition ease-in-out"
-                    href="#"
+                    onClick={addExperience}
                   >
                     Add Experience
                   </a>
@@ -380,7 +529,7 @@ function ResumeBuilder() {
                     <label className="mb-1">Start Date</label>
                     <input
                       className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                      type="date"
+                      type="text"
                       value={project.startDate}
                       onChange={(e) =>
                         updateProject(index, "startDate", e.target.value)
@@ -389,7 +538,7 @@ function ResumeBuilder() {
                     <label className="mb-1">End Date</label>
                     <input
                       className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                      type="date"
+                      type="text"
                       value={project.endDate}
                       onChange={(e) =>
                         updateProject(index, "endDate", e.target.value)
@@ -398,9 +547,9 @@ function ResumeBuilder() {
                     <label className="mb-1">Description</label>
                     <textarea
                       className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                      value={project.description}
+                      value={project.achivements}
                       onChange={(e) =>
-                        updateProject(index, "description", e.target.value)
+                        updateProject(index, "achivements", e.target.value)
                       }
                     ></textarea>
                     <label className="mb-1">Technologies Used</label>
@@ -425,38 +574,73 @@ function ResumeBuilder() {
             {/* Education Tab */}
             {activeTab === "education" && (
               <div>
-                <div className="flex flex-col rounded-md border bg-white p-8 mb-4 shadow-xs">
-                  <h1 className="font-semibold text-xl mb-6">Education 1</h1>
-                  <label className="mb-1">Institution</label>
-                  <input
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    type="text"
-                  />
-                  <label className="mb-1">Degree</label>
-                  <input
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    type="text"
-                  />
-                  <label className="mb-1">Start Date</label>
-                  <input
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    type="date"
-                  />
-                  <label className="mb-1">End Date</label>
-                  <input
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    type="date"
-                  />
-                  <label className="mb-1">Description</label>
-                  <textarea
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    name="Description"
-                  ></textarea>
-                </div>
+                {education.map((education, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col rounded-md border bg-white p-8 mb-4 shadow-xs"
+                  >
+                    <div className="flex justify-between flex-wrap">
+                      <h1 className="font-semibold text-xl mb-6">
+                        Education {index + 1}
+                      </h1>
+                      <a
+                        className="text-sm text-red-500 hover:scale-120 transition ease-in-out"
+                        onClick={() => removeEducation(index)}
+                      >
+                        <IconTrashX stroke={2} />
+                      </a>
+                    </div>
+                    <label className="mb-1">Institution</label>
+                    <input
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      type="text"
+                      value={education.institution}
+                      onChange={(e) =>
+                        updateEducation(index, "institution", e.target.value)
+                      }
+                    />
+                    <label className="mb-1">Degree</label>
+                    <input
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      type="text"
+                      value={education.degree}
+                      onChange={(e) =>
+                        updateEducation(index, "degree", e.target.value)
+                      }
+                    />
+                    <label className="mb-1">Start Date</label>
+                    <input
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      type="text"
+                      value={education.startDate}
+                      onChange={(e) =>
+                        updateEducation(index, "startDate", e.target.value)
+                      }
+                    />
+                    <label className="mb-1">End Date</label>
+                    <input
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      type="text"
+                      value={education.endDate}
+                      onChange={(e) =>
+                        updateEducation(index, "endDate", e.target.value)
+                      }
+                    />
+                    <label className="mb-1">Description</label>
+                    <textarea
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      name="Description"
+                      value={education.description}
+                      onChange={(e) =>
+                        updateEducation(index, "description", e.target.value)
+                      }
+                    ></textarea>
+                  </div>
+                ))}
                 <div className="flex justify-between bg-white">
                   <a
                     className="w-full flex items-center justify-center border bg-white text-black px-3 py-2 rounded-md text-sm hover:bg-gray-300 transition ease-in-out"
-                    href="#"
+                    onClick={addEducation}
                   >
                     Add Education
                   </a>
@@ -466,25 +650,46 @@ function ResumeBuilder() {
             {/* Skills Tab */}
             {activeTab === "skills" && (
               <div>
-                <div className="flex flex-col rounded-md border bg-white p-8 mb-4 shadow-xs">
-                  <h1 className="font-semibold text-xl mb-6">
-                    Skill Heading 1
-                  </h1>
-                  <label className="mb-1">Skill Header</label>
-                  <input
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    type="text"
-                  />
-                  <label className="mb-1">Skills</label>
-                  <input
-                    className="mb-4 py-2 rounded-md border pl-4 pr-4"
-                    type="text"
-                  />
-                </div>
+                {skills.map((skill, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col rounded-md border bg-white p-8 mb-4 shadow-xs"
+                  >
+                    <div className="flex justify-between flex-wrap">
+                      <h1 className="font-semibold text-xl mb-6">
+                        Skill Header {index + 1}
+                      </h1>
+                      <a
+                        className="text-sm text-red-500 hover:scale-120 transition ease-in-out"
+                        onClick={() => removeSkills(index)}
+                      >
+                        <IconTrashX stroke={2} />
+                      </a>
+                    </div>
+                    <label className="mb-1">Skill Header</label>
+                    <input
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      type="text"
+                      value={skill.skillHeader}
+                      onChange={(e) =>
+                        updateSkills(index, "skillHeader", e.target.value)
+                      }
+                    />
+                    <label className="mb-1">Skills</label>
+                    <input
+                      className="mb-4 py-2 rounded-md border pl-4 pr-4"
+                      type="text"
+                      value={skill.skills}
+                      onChange={(e) =>
+                        updateSkills(index, "skills", e.target.value)
+                      }
+                    />
+                  </div>
+                ))}
                 <div className="flex justify-between bg-white">
                   <a
                     className="w-full flex items-center justify-center border bg-white text-black px-3 py-2 rounded-md text-sm hover:bg-gray-300 transition ease-in-out"
-                    href="#"
+                    onClick={addSkills}
                   >
                     Add Skill Header
                   </a>
@@ -495,13 +700,13 @@ function ResumeBuilder() {
           <div className="flex justify-between bg-white">
             <a
               className="flex items-center gap-x-2 border bg-white text-black px-3 py-2 rounded-md text-sm hover:bg-gray-300 transition ease-in-out"
-              href="#download functionality"
+              onClick={goToPreviousTab}
             >
               Previous
             </a>
             <a
               className="flex items-center gap-x-2 border bg-white text-black px-3 py-2 rounded-md text-sm hover:bg-gray-300 transition ease-in-out"
-              href="#download functionality"
+              onClick={goToNextTab}
             >
               Next
             </a>
