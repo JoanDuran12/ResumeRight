@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- Background Circle -->
+  <circle cx="200" cy="150" r="145" fill="#1a4c7c" />
+  
+  <!-- Stylized R letters -->
+  <path d="M150 80 C180 80, 205 92, 205 125 C205 155, 175 168, 150 168 L150 220" 
+        fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M150 168 C180 168, 210 180, 215 220" 
+        fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+        
+  <path d="M245 80 C275 80, 300 92, 300 125 C300 155, 270 168, 245 168 L245 220" 
+        fill="none" stroke="#4ecdc4" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M245 168 C275 168, 305 180, 310 220" 
+        fill="none" stroke="#4ecdc4" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Small document icon accent -->
+  <rect x="100" y="120" width="34" height="60" fill="#4ecdc4" rx="4" ry="4" />
+  <path d="M106 132 L128 132" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+  <path d="M106 144 L128 144" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+  <path d="M106 156 L128 156" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+  <path d="M106 168 L128 168" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+</svg>

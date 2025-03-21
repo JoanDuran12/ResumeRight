@@ -1,10 +1,11 @@
 'use client'
 
-import { IconFileDescription, IconSun, IconMoon } from "@tabler/icons-react";
+import { IconSun, IconMoon } from "@tabler/icons-react";
 import Link from "next/link";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "@/app/contexts/ThemeContext";
+import Image from "next/image";
 
 const navItems = [
   {
@@ -53,8 +54,18 @@ function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-center">
       <div className="container flex h-16 items-center justify-between px-24">
         <div className="flex items-center gap-2">
-          <IconFileDescription stroke={2} className="size-8" />
-          <Link href="/" className="font-bold text-xl">ResumeRight</Link>
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-10 h-10 relative">
+              <Image
+                src="/logo.svg"
+                alt="ResumeRight Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+            <span className="font-bold text-xl">ResumeRight</span>
+          </Link>
         </div>
         <nav className="hidden md:flex items-center gap-6">
           {navItems.map((item) => (
