@@ -41,9 +41,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     // Listen for logout events from other tabs
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === AUTH_LOGOUT_EVENT) {
-        router.push('/');
-      } else if (event.key === AUTH_DELETION_EVENT) {
+      if (event.key === AUTH_LOGOUT_EVENT || event.key === AUTH_DELETION_EVENT) {
         router.push('/');
       }
     };

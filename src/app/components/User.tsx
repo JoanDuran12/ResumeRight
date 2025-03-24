@@ -65,7 +65,7 @@ const User = () => {
           )}
         </div>
         <div>
-          <h3 className="font-medium text-lg">{user.displayName || 'User'}</h3>
+          <h3 className="font-medium text-lg">{user.displayName ?? 'User'}</h3>
           <p className="opacity-70">{user.email}</p>
         </div>
       </div>

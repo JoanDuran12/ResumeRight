@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { IconFileText, IconFileUpload, IconPlus } from '@tabler/icons-react';
 import { useAuth } from '@/app/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface DashboardCardProps {
   id: string;
@@ -10,10 +11,12 @@ interface DashboardCardProps {
   action: string;
   onClick: () => void;
   requiresAuth: boolean;
+  href: string;
 }
 
 const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,8 +33,9 @@ const Dashboard: React.FC = () => {
       description: "Access your previously saved documents",
       icon: <IconFileText size={64} stroke={1.5} />,
       action: "Open",
-      onClick: () => console.log("View saved items clicked"),
-      requiresAuth: true
+      onClick: () => router.push("/saved"),
+      requiresAuth: true,
+      href: "/saved"
     },
     {
       id: "import-pdf",
@@ -40,7 +44,8 @@ const Dashboard: React.FC = () => {
       icon: <IconFileUpload size={64} stroke={1.5} />,
       action: "Upload",
       onClick: () => fileInputRef.current?.click(),
-      requiresAuth: false
+      requiresAuth: false,
+      href: ""
     },
     {
       id: "create-new",
@@ -48,14 +53,19 @@ const Dashboard: React.FC = () => {
       description: "Start a fresh document from scratch",
       icon: <IconPlus size={64} stroke={1.5} />,
       action: "Create",
-      onClick: () => console.log("Create new clicked"),
-      requiresAuth: false
+      onClick: () => router.push("/editor"),
+      requiresAuth: false,
+      href: "/editor"
     }
   ];
 
   const handleCardClick = (card: DashboardCardProps) => {
     if (!(card.requiresAuth && !user)) {
-      card.onClick();
+      if (card.href) {
+        router.push(card.href);
+      } else {
+        card.onClick();
+      }
     }
   };
   
