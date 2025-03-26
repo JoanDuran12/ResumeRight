@@ -21,8 +21,8 @@ const navItems = [
 
 function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-24">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center h-16 justify-between px-24">
+      {/* <div className="container flex h-16 items-center justify-between px-24"> */}
         <div className="flex items-center gap-2">
           <IconFileDescription stroke={2} className="size-8" />
           <span className="font-bold text-xl">ResumeRight</span>
@@ -46,12 +46,12 @@ function Header() {
           </a>
           <a
             className="border bg-black text-white px-3 py-2 rounded-md text-sm hover:underline underline-offset-4"
-            href=""
+            href="/src/app/resume/ResumeBuilder.tsx"
           >
             Get Started
           </a>
         </div>
-      </div>
+      {/* </div> */}
     </header>
   );
 }
