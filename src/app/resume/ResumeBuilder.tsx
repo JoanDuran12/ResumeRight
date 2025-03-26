@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 import { IconFileDescription } from "@tabler/icons-react";
 import { IconDownload } from "@tabler/icons-react";
 import { IconTrashX } from "@tabler/icons-react";
@@ -188,80 +189,6 @@ function ResumeBuilder() {
     setSkills((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // const [skills, setSkills] = useState([
-  //   "JavaScript",
-  //   "React",
-  //   "Node.js",
-  //   "TypeScript",
-  //   "HTML/CSS",
-  // ]);
-
-  // const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const { name, value } = e.target;
-  //   setPersonalInfo((prev) => ({ ...prev, [name]: value }));
-  // };
-
-  // const addExperience = () => {
-  //   setExperiences((prev) => [
-  //     ...prev,
-  //     {
-  //       company: "",
-  //       position: "",
-  //       startDate: "",
-  //       endDate: "",
-  //       description: "",
-  //     },
-  //   ]);
-  // };
-
-  // const updateExperience = (index: number, field: string, value: string) => {
-  //   setExperiences((prev) =>
-  //     prev.map((exp, i) => (i === index ? { ...exp, [field]: value } : exp))
-  //   );
-  // };
-
-  // const removeExperience = (index: number) => {
-  //   setExperiences((prev) => prev.filter((_, i) => i !== index));
-  // };
-
-  // const addEducation = () => {
-  //   setEducation((prev) => [
-  //     ...prev,
-  //     {
-  //       projectName: "",
-  //       startDate: "",
-  //       endDate: "",
-  //       achivements: "",
-  //       tools: [],
-  //     },
-  //   ]);
-  // };
-
-  // const updateEducation = (index: number, field: string, value: string) => {
-  //   setEducation((prev) =>
-  //     prev.map((edu, i) => (i === index ? { ...edu, [field]: value } : edu))
-  //   );
-  // };
-
-  // const removeEducation = (index: number) => {
-  //   setEducation((prev) => prev.filter((_, i) => i !== index));
-  // };
-
-  // const addSkill = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  //   if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
-  //     setSkills((prev) => [
-  //       ...prev,
-  //       (e.target as HTMLInputElement).value.trim(),
-  //     ]);
-  //     (e.target as HTMLInputElement).value = "";
-  //     e.preventDefault();
-  //   }
-  // };
-
-  // const removeSkill = (index: number) => {
-  //   setSkills((prev) => prev.filter((_, i) => i !== index));
-  // };
-
   return (
     <div>
       <header className="ticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center h-16 justify-between px-24">
@@ -286,7 +213,7 @@ function ResumeBuilder() {
         </div>
       </header>
       <main className="flex-1 flex flex-row py-6 md:py-12 gap-x-8">
-        <div className="flex flex-col w-[700px] ml-12">
+        <div className="flex flex-col w-[700px] ml-12 h-min-[200px] overscroll-y-auto">
           <h1 className="text-3xl font-bold mb-6">Build Your Resume</h1>
           <div className="flex flex-row flex-wrap gap-4 justify-center gap-x-18 rounded-md shadow-xs py-4 mb-8">
             <a
@@ -713,7 +640,13 @@ function ResumeBuilder() {
           </div>
         </div>
         <div className="">
-          <img src="https://fakeimg.pl/700x900" alt="resume builder" />
+          {/* <img src="https://fakeimg.pl/700x900" alt="resume builder" /> */}
+          <object
+            className="w-[700px] h-[900px] p-8"
+            data="https://pdfobject.com/pdf/sample.pdf"
+            type="application/pdf"
+          ></object>
+          {/* <LaTeXResumePreview/> */}
         </div>
       </main>
       <Footer />
