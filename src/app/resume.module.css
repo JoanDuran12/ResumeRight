@@ -1,0 +1,424 @@
+/* ResumeStyles.module.css */
+@font-face {
+  font-family: 'Latin Modern Roman';
+  src: url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/regular/lmroman10-regular.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/regular/lmroman10-regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Latin Modern Roman';
+  src: url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/semibold/lmroman12-bold.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/semibold/lmroman12-bold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Latin Modern Roman';
+  src: url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/italic/lmroman10-italic.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/italic/lmroman10-italic.woff') format('woff');
+  font-weight: normal;
+  font-style: italic;
+}
+
+/* Latin Modern Roman only */
+
+.resumePage {
+  font-family: 'Latin Modern Roman', serif;
+  font-size: 11pt;
+  color: #000000;
+  background-color: #ffffff;
+  max-width: 8.5in;
+  margin: 0 auto;
+  padding: 0.5in;
+  line-height: 1.4;
+  word-spacing: normal;
+  letter-spacing: normal;
+}
+
+.resumeHeader {
+  text-align: center;
+}
+
+.resumeName {
+  font-family: 'Latin Modern Roman', serif;
+  font-size: 24pt;
+  font-weight: 600; /* Softer weight */
+  text-transform: none;
+  letter-spacing: normal;
+  margin: 0;
+}
+
+.resumeContact {
+  margin-top: -0.5em;
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+}
+
+.resumeContact > span:not([contenteditable]) {
+  font-size: 1.5em;
+  line-height: 0.7;
+}
+
+.contactItem {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: underline;
+  color: #000;
+}
+
+.contactPrefix {
+  text-decoration: underline;
+}
+
+.contactValue {
+  text-decoration: underline;
+}
+
+/* Remove any old border styles */
+.contactItem [contenteditable] {
+  text-decoration: underline;
+  cursor: text;
+}
+
+.resumeContact a {
+  color: #000000;
+}
+
+.resumeSection {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.resumeSectionTitle {
+  font-family: 'Latin Modern Roman', serif;
+  font-size: 14pt;
+  font-weight: normal;
+  text-transform: none;
+  font-variant: small-caps;
+  letter-spacing: 0.5px;
+  margin-bottom: 0;
+  color: #000000;
+  flex: 1;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3em;
+  position: relative;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 0.1em;
+}
+
+.sectionHeader:hover .addNewButton {
+  opacity: 1;
+}
+
+.addNewButton {
+  background: #1a1a1a;
+  border: none;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11pt;
+  opacity: 0;
+  transition: all 0.2s ease-in-out;
+}
+
+.addNewButton:hover {
+  background: #333;
+}
+
+.resumeItem {
+  margin-top: 0.3em;
+  margin-bottom: 0.8em;
+  position: relative;
+}
+
+.resumeItemHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.1em;
+}
+
+.resumeItemTitle {
+  font-weight: 600; /* Softer than bold (700) */
+}
+
+.resumeItemLocation {
+  text-align: right;
+}
+
+.resumeItemSubheader {
+  display: flex;
+  justify-content: space-between;
+  font-style: italic;
+  margin-bottom: 0.3em;
+}
+
+.resumeItemOrg {
+  font-style: italic;
+}
+
+.resumeItemDate {
+  text-align: right;
+  font-style: italic;
+}
+
+.resumeBullets {
+  list-style-type: disc;
+  padding-left: 1.2em;
+  padding-right: 1.2em;
+  margin-top: 0.2em;
+  margin-bottom: 0;
+}
+
+.resumeBullets li {
+  margin-bottom: 0.2em;
+  padding-left: 0.2em;
+  position: relative;
+}
+
+.resumeBullets li:last-child {
+  margin-bottom: 0;
+}
+
+.resumeSection:last-child {
+  margin-bottom: 0;
+}
+
+.resumeProjectHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.3em;
+}
+
+.resumeProjectTitle {
+  font-weight: 600; /* Softer weight */
+}
+
+.resumeProjectTech {
+  font-style: italic;
+  font-weight: normal;
+}
+
+/* .resumeSkills {
+  margin-top: 0.5em;
+} */
+
+.resumeSkillsCategory {
+  font-weight: 600;
+  display: inline;
+}
+
+.resumeSkillsList {
+  display: inline;
+  margin-left: 0.2em;
+}
+
+.skillRow {
+  position: relative;
+  margin-bottom: 0.3em;
+}
+
+.skillRow:last-child {
+  margin-bottom: 0;
+}
+
+.resumeSkillsCategory {
+  font-weight: 600;
+  display: inline;
+}
+
+.resumeSkillsList {
+  display: inline;
+  margin-left: 0.2em;
+}
+
+.skillRow .deleteButton {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Placeholder styles for contentEditable elements */
+.editableField {
+  min-width: 1px; /* Ensures the element remains clickable when empty */
+}
+
+.editableField:empty::before {
+  content: attr(data-placeholder);
+  color: #999;
+  font-style: italic;
+  pointer-events: none;
+}
+
+.editableField:focus {
+  outline: none;
+}
+
+/* Preserve italic style for date fields even with placeholder */
+.dateField:empty::before {
+  font-style: italic;
+}
+
+/* Keep the font weight for titles even with placeholder */
+.titleField:empty::before {
+  font-weight: 600;
+}
+
+/* Keep italic style for specific fields even with placeholder */
+.italicField:empty::before {
+  font-style: italic;
+}
+
+/* Add proper spacing for print layout */
+@page {
+  margin: 0.5in;
+}
+
+@media print {
+  .resumePage {
+    padding: 0;
+    margin: 0;
+    max-width: none;
+  }
+}
+
+.deleteButton {
+  position: absolute;
+  right: -30px;
+  top: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #f44336;
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.resumeItem:hover .deleteButton {
+  opacity: 1;
+}
+
+.deleteButton:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.addButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px dashed #999;
+  color: #666;
+  font-size: 11pt;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+
+.addButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: #666;
+  color: #333;
+}
+
+.bulletDeleteButton {
+  position: absolute;
+  right: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #f44336;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.resumeBullets li:hover .bulletDeleteButton {
+  opacity: 1;
+}
+
+.bulletDeleteButton:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.undoRedoContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 8px;
+  z-index: 1000;
+}
+
+.undoRedoButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #666;
+  font-size: 14px;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.undoRedoButton:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #ccc;
+  color: #333;
+}
+
+.undoRedoButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.addBulletButton {
+  background: transparent;
+  border: 1px solid #1a1a1a;
+  color: #1a1a1a;
+  cursor: pointer;
+  font-size: 12pt;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-left: 8px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.resumeItemHeader:hover .addBulletButton,
+.resumeProjectHeader:hover .addBulletButton {
+  opacity: 1;
+}
+
+.addBulletButton:hover {
+  background: #1a1a1a;
+  color: white;
+}

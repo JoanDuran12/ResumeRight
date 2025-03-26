@@ -7,6 +7,7 @@ import { collection, getDocs, query, where, orderBy, Timestamp } from 'firebase/
 import { useEffect, useState } from 'react';
 
 interface SavedResume {
+    id: string;
     title: string;
     updatedAt: Timestamp;
     templateId: string;
@@ -53,16 +54,15 @@ const Saved = () => {
                 ); 
                 const querySnapshot = await getDocs(q);
                 querySnapshot.forEach((doc) => {
-                    updatedData.push(
-                        {
-                            title: doc.get("title"),
-                            updatedAt: doc.get("updatedAt"),
-                            templateId: doc.get("templatedId"),
-                            latexContent: doc.get("latexContent"),
-                            createdAt: doc.get("createdAt"),
-                            userId: doc.get("userId")
-                        } as SavedResume
-                    )
+                    updatedData.push({
+                        id: doc.id,
+                        title: doc.get("title"),
+                        updatedAt: doc.get("updatedAt"),
+                        templateId: doc.get("templatedId"),
+                        latexContent: doc.get("latexContent"),
+                        createdAt: doc.get("createdAt"),
+                        userId: doc.get("userId")
+                    } as SavedResume)
                 });
 
                 setData(updatedData);
@@ -106,9 +106,9 @@ const Saved = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {data.map((resume, index) => (
+                            {data.map((resume) => (
                                 <tr 
-                                    key={index} 
+                                    key={resume.id}
                                     className="border-b border-[var(--foreground)] border-opacity-10 hover:bg-neutral-500/5"
                                 >
                                     <td className="px-6 py-4">
