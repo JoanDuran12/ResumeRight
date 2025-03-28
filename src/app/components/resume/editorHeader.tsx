@@ -1,6 +1,11 @@
 "use client";
 
-import { IconSun, IconMoon, IconDownload } from "@tabler/icons-react";
+import {
+  IconSun,
+  IconMoon,
+  IconDownload,
+  IconFileCheck,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useState, useRef, useEffect } from "react";
@@ -52,7 +57,10 @@ function EditorPageHeader() {
         </div>
         <nav className="hidden md:flex items-center gap-6">
           <div className="flex items-center gap-x-2 border bg-black text-white px-3 py-2 rounded-md text-sm hover:bg-black/80 transition-colors">
-            <IconDownload stroke={2} /> Download PDF
+            <IconFileCheck stroke={2} /> Save
+          </div>
+          <div className="flex items-center gap-x-2 border bg-black text-white px-3 py-2 rounded-md text-sm hover:bg-black/80 transition-colors">
+            <IconDownload stroke={2} /> Download
           </div>
         </nav>
         <div className="flex items-center gap-4">
