@@ -84,9 +84,9 @@
 
 .separator {
   display: inline-block;
-  font-size: 1em;
+  font-size: 1rem;
   line-height: 1;
-  margin: 0 0.2em;
+  margin: 0;
   position: relative;
   top: 0;
   font-weight: normal;
@@ -149,7 +149,7 @@
 .titleWithButton {
   display: flex;
   align-items: center;
-  gap: 0.5em;
+  gap: 0.3em;
 }
 
 .resumeItemTitle {

@@ -1,28 +1,35 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useResume } from '@/app/contexts/ResumeContext';
 import styles from '@/app/resume.module.css';
-import EditableText from './components/EditableText';
-import ProjectsSection from './components/ProjectsSection';
-import ExperienceSection from './components/ExperienceSection';
-import EducationSection from './components/EducationSection';
-import ResumeHeader from './components/ResumeHeader';
-import AdditionalSection from './components/AdditionalSection';
-import { useTheme } from '@/app/contexts/ThemeContext';
-import { 
-  IconUser, 
-  IconLayoutList, 
-  IconChevronDown, 
-  IconArrowBackUp, 
-  IconArrowForwardUp, 
-  IconTrash, 
-  IconFileUpload 
+import ProjectsSection from './components/ProjectsSection'; // Assuming this exists
+import ExperienceSection from './components/ExperienceSection'; // Assuming this exists
+import EducationSection from './components/EducationSection'; // Assuming this exists
+import ResumeHeader from './components/ResumeHeader'; // Assuming this exists
+import AdditionalSection from './components/AdditionalSection'; // Assuming this exists
+import { useTheme } from '@/app/contexts/ThemeContext'; // Assuming this exists
+import {
+  IconUser,
+  IconLayoutList,
+  IconChevronDown,
+  IconArrowBackUp,
+  IconArrowForwardUp,
+  IconTrash,
+  IconFileUpload,
 } from '@tabler/icons-react';
 import {
+  // Interfaces
   Contact,
+  AppState,
   HistoryState,
+  HistoryEvent,
+  HistoryActionType,
   Sections,
+  EducationSection as EducationSectionType,
+  ExperienceSection as ExperienceSectionType,
+  ProjectSection as ProjectSectionType,
+  Skill as SkillType,
+  // Functions
   getInitialHistoryState,
   undo,
   redo,
@@ -39,62 +46,70 @@ import {
   updateProjectBullet,
   updateSkill,
   updateSectionTitle,
+  updateName,
+  updateContactField,
   saveToLocalStorage,
   loadFromLocalStorage,
-  clearLocalStorage
-} from './resumeEditor';
-
-
+  clearLocalStorage,
+  getHistoryStats,    // New function
+  getRecentActions,   // New function
+} from './resumeEditor'; // Adjust path if necessary
 
 const ResumeEditor: React.FC = () => {
-  const { currentResume, updateContent } = useResume();
-  const [name, setName] = useState('');
-  const [contact, setContact] = useState<Contact>({
-    phone: '',
-    email: '',
-    website: '',
-    linkedin: '',
-    github: ''
-  });
   const [history, setHistory] = useState<HistoryState>(getInitialHistoryState());
+  const { theme } = useTheme(); // Assuming ThemeContext works independently
 
-  const sections = history.present;
+  // Get current state from history
+  const currentState = history.currentState;
+  const { sections, name, contact } = currentState;
 
   // Load data from localStorage on initial render
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const { sections, name: savedName, contact: savedContact } = loadFromLocalStorage();
-      
-      if (sections) {
-        setHistory(prev => ({
-          ...prev,
-          present: sections
-        }));
-      }
-      
-      if (savedName) {
-        setName(savedName);
-      }
-      
-      if (savedContact) {
-        setContact(savedContact);
-      }
-    }
-  }, []);
+      const loadedState = loadFromLocalStorage();
+      if (loadedState) {
+        // Initialize history with loaded state
+        const initialEvent = {
+          type: HistoryActionType.BATCH_UPDATE,
+          beforeState: loadedState, // Same as currentState for first event
+          currentState: loadedState,
+          timestamp: Date.now(),
+          description: 'Loaded from storage'
+        };
 
-  // Save to localStorage whenever relevant state changes
+        setHistory({
+          events: [initialEvent],
+          currentIndex: 0,
+          currentState: loadedState
+        });
+      }
+      // If nothing loaded, the initial state from useState is used.
+    }
+  }, []); // Run only once on mount
+
+  // Save to localStorage whenever currentState changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Debounce saving to avoid excessive writes
       const timeoutId = setTimeout(() => {
-        saveToLocalStorage(sections, name, contact);
+        saveToLocalStorage(history); // Save the entire history state
       }, 500);
-      
+
       return () => clearTimeout(timeoutId);
     }
-  }, [sections, name, contact]);
+  }, [history]);
 
-  const updateContact = (field: string, value: string) => {
-    setContact(prev => ({ ...prev, [field]: value }));
+  // History stats for UI or debugging
+  const historyStats = getHistoryStats(history);
+  const recentActions = getRecentActions(history, 5);
+
+  // --- Handlers ---
+  const handleUpdateName = (newName: string) => {
+    updateName(currentState, newName, setHistory);
+  };
+
+  const handleUpdateContact = (field: string, value: string) => {
+    updateContactField(currentState, field as keyof Contact, value, setHistory);
   };
 
   const handleUndo = useCallback(() => {
@@ -107,64 +122,44 @@ const ResumeEditor: React.FC = () => {
 
   const handleClearResume = () => {
     if (window.confirm('Are you sure you want to clear all resume data? This action cannot be undone.')) {
-      setHistory(getInitialHistoryState());
-      setName('');
-      setContact({
-        phone: '',
-        email: '',
-        website: '',
-        linkedin: '',
-        github: ''
-      });
-      clearLocalStorage();
+      setHistory(getInitialHistoryState()); // Reset to initial history state
+      clearLocalStorage(); // Clear storage as well
     }
   };
 
-  const handleImportPDF = () => {
-    // PDF import logic here
-    alert('PDF import functionality will be implemented here');
-  };
-
-  const handleModifySections = () => {
-    // Sections modification logic
-  };
-
-  const handleModifyHeader = () => {
-    // Header modification logic
-  };
-
+  // Section operations
   const handleDeleteSection = (sectionType: 'education' | 'experience' | 'projects' | 'skills', id: string) => {
-    deleteSection(sections, sectionType, id, setHistory);
+    deleteSection(currentState, sectionType, id, setHistory);
   };
 
   const handleDeleteBullet = (sectionType: 'education' | 'experience' | 'projects', sectionId: string, bulletId: string) => {
-    deleteBullet(sections, sectionType, sectionId, bulletId, setHistory);
+    deleteBullet(currentState, sectionType, sectionId, bulletId, setHistory);
   };
 
   const handleAddBullet = (sectionType: 'education' | 'experience' | 'projects', sectionId: string) => {
-    addBullet(sections, sectionType, sectionId, setHistory);
+    addBullet(currentState, sectionType, sectionId, setHistory);
   };
 
   const handleAddSkillCategory = () => {
-    addSkillCategory(sections, setHistory);
+    addSkillCategory(currentState, setHistory);
   };
 
   const handleAddSection = (sectionType: 'education' | 'experience' | 'projects') => {
-    addSection(sections, sectionType, setHistory);
+    addSection(currentState, sectionType, setHistory);
   };
 
+  // Education-specific handlers
   const handleUpdateEducation = (index: number, field: string, value: string) => {
-    updateEducation(sections, index, field, value, setHistory);
+    updateEducation(currentState, index, field as keyof EducationSectionType, value, setHistory);
   };
 
   const handleUpdateEducationBullet = (eduIndex: number, bulletIndex: number, value: string) => {
-    updateEducationBullet(sections, eduIndex, bulletIndex, value, setHistory);
+    updateEducationBullet(currentState, eduIndex, bulletIndex, value, setHistory);
   };
 
   const deleteEducationBullet = (eduIndex: number, bulletIndex: number) => {
     const eduId = sections.education[eduIndex]?.id;
     const bulletId = sections.education[eduIndex]?.bullets[bulletIndex]?.id;
-    
     if (eduId && bulletId) {
       handleDeleteBullet('education', eduId, bulletId);
     }
@@ -172,24 +167,23 @@ const ResumeEditor: React.FC = () => {
 
   const addEducationBullet = (eduIndex: number) => {
     const eduId = sections.education[eduIndex]?.id;
-    
     if (eduId) {
       handleAddBullet('education', eduId);
     }
   };
 
+  // Experience-specific handlers
   const handleUpdateExperience = (index: number, field: string, value: string) => {
-    updateExperience(sections, index, field, value, setHistory);
+    updateExperience(currentState, index, field as keyof ExperienceSectionType, value, setHistory);
   };
 
   const handleUpdateExperienceBullet = (expIndex: number, bulletIndex: number, value: string) => {
-    updateExperienceBullet(sections, expIndex, bulletIndex, value, setHistory);
+    updateExperienceBullet(currentState, expIndex, bulletIndex, value, setHistory);
   };
 
   const deleteExperienceBullet = (expIndex: number, bulletIndex: number) => {
     const expId = sections.experience[expIndex]?.id;
     const bulletId = sections.experience[expIndex]?.bullets[bulletIndex]?.id;
-    
     if (expId && bulletId) {
       handleDeleteBullet('experience', expId, bulletId);
     }
@@ -197,24 +191,23 @@ const ResumeEditor: React.FC = () => {
 
   const addExperienceBullet = (expIndex: number) => {
     const expId = sections.experience[expIndex]?.id;
-    
     if (expId) {
       handleAddBullet('experience', expId);
     }
   };
 
+  // Project-specific handlers
   const handleUpdateProject = (index: number, field: string, value: string) => {
-    updateProject(sections, index, field, value, setHistory);
+    updateProject(currentState, index, field as keyof ProjectSectionType, value, setHistory);
   };
 
   const handleUpdateProjectBullet = (projIndex: number, bulletIndex: number, value: string) => {
-    updateProjectBullet(sections, projIndex, bulletIndex, value, setHistory);
+    updateProjectBullet(currentState, projIndex, bulletIndex, value, setHistory);
   };
 
   const deleteProjectBullet = (projIndex: number, bulletIndex: number) => {
     const projectId = sections.projects[projIndex]?.id;
     const bulletId = sections.projects[projIndex]?.bullets[bulletIndex]?.id;
-    
     if (projectId && bulletId) {
       handleDeleteBullet('projects', projectId, bulletId);
     }
@@ -222,20 +215,21 @@ const ResumeEditor: React.FC = () => {
 
   const addProjectBullet = (projIndex: number) => {
     const projectId = sections.projects[projIndex]?.id;
-    
     if (projectId) {
       handleAddBullet('projects', projectId);
     }
   };
 
+  // Skills and section title handlers
   const handleUpdateSkill = (index: number, field: string, value: string) => {
-    updateSkill(sections, index, field, value, setHistory);
+    updateSkill(currentState, index, field as keyof SkillType, value, setHistory);
   };
 
   const handleUpdateSectionTitle = (sectionType: 'additionalTitle' | 'educationTitle' | 'experienceTitle' | 'projectsTitle', value: string) => {
-    updateSectionTitle(sections, sectionType, value, setHistory);
+    updateSectionTitle(currentState, sectionType, value, setHistory);
   };
 
+  // Keyboard shortcut listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
@@ -253,87 +247,104 @@ const ResumeEditor: React.FC = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleUndo, handleRedo]);
 
-  const { theme } = useTheme();
-  
+  // Optional: Display history status for debugging
+  const renderHistoryDebug = () => (
+    <div className="text-xs bg-gray-100 p-2 rounded mt-4">
+      <div>History Events: {historyStats.totalEvents}</div>
+      <div>Current Position: {historyStats.currentPosition}</div>
+      <div>Can Undo: {historyStats.canUndo ? 'Yes' : 'No'}</div>
+      <div>Can Redo: {historyStats.canRedo ? 'Yes' : 'No'}</div>
+      <div>Last Action: {historyStats.lastEvent}</div>
+      
+      <div className="mt-2">Recent Actions:</div>
+      <ul className="list-disc pl-4">
+        {recentActions.map((action, i) => (
+          <li key={i} className={action.isCurrent ? 'font-bold' : ''}>
+            {action.timestamp}: {action.description}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  // --- JSX ---
   return (
-    
     <div className="flex flex-col">
       {/* Header Controls Bar */}
       <div className={`w-full ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-b shadow-sm sticky top-0 z-10 py-3 px-4`}>
-  <div className="max-w-7xl mx-auto flex justify-between items-center">
-    <div className="flex items-center space-x-3">
-      <button 
-        onClick={handleModifyHeader}
-        className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-50'} border rounded-md px-3 py-1.5 transition-colors`}
-      >
-        <IconUser size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
-        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : ''}`}>Contact Header</span>
-        <IconChevronDown size={16} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
-      </button>
-      
-      <button 
-        onClick={handleModifySections}
-        className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-50'} border rounded-md px-3 py-1.5 transition-colors`}
-      >
-        <IconLayoutList size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
-        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : ''}`}>Content Blocks</span>
-        <IconChevronDown size={16} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
-      </button>
-    </div>
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          {/* Left Buttons */}
+            <div className="flex items-center space-x-3">
+                <button 
+              className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-50'} border rounded-md px-3 py-1.5 transition-colors`}
+            >
+              <IconUser size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : ''}`}>Contact Header</span>
+              <IconChevronDown size={16} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+            </button>
+            
+            <button 
+              className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-50'} border rounded-md px-3 py-1.5 transition-colors`}
+            >
+              <IconLayoutList size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : ''}`}>Content Blocks</span>
+              <IconChevronDown size={16} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+            </button>
+          </div>
     
-    <div className="flex items-center">
-      <div className="flex items-center mr-4">
-        <button 
-          onClick={handleUndo} 
-          disabled={history.past.length === 0}
-          className={`p-1.5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} rounded-l-md border disabled:opacity-40 transition-colors`}
-          title="Undo"
-        >
-          <IconArrowBackUp size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
-        </button>
-        
-        <button 
-          onClick={handleRedo} 
-          disabled={history.future.length === 0}
-          className={`p-1.5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} rounded-r-md border border-l-0 disabled:opacity-40 transition-colors`}
-          title="Redo"
-        >
-          <IconArrowForwardUp size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
-        </button>
+          {/* Right Buttons */}
+          <div className="flex items-center">
+            <div className="flex items-center mr-4">
+              <button
+                onClick={handleUndo}
+                disabled={!historyStats.canUndo} // Use historyStats
+                className={`p-1.5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} rounded-l-md border disabled:opacity-40 transition-colors`}
+                title="Undo (Ctrl+Z)"
+              >
+                <IconArrowBackUp size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+              </button>
+
+              <button
+                onClick={handleRedo}
+                disabled={!historyStats.canRedo} // Use historyStats
+                className={`p-1.5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} rounded-r-md border border-l-0 disabled:opacity-40 transition-colors`}
+                title="Redo (Ctrl+Shift+Z)"
+              >
+                <IconArrowForwardUp size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+              </button>
+            </div>
+
+            <button
+              onClick={handleClearResume}
+              className={`p-1.5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} rounded-md border mr-3 transition-colors`}
+              title="Clear Resume"
+            >
+              <IconTrash size={18} stroke={1.5} className="text-red-500" />
+            </button>
+
+            <button
+              // onClick={handleImportPDF}
+              className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-900 hover:bg-gray-800'} text-white rounded-md px-4 py-1.5 transition-colors`}
+            >
+              <IconFileUpload size={18} stroke={1.5} />
+              <span className="text-sm font-medium">Import PDF</span>
+            </button>
+            
+          </div>
+        </div>
       </div>
-      
-      <button 
-        onClick={handleClearResume}
-        className={`p-1.5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} rounded-md border mr-3 transition-colors`}
-        title="Clear Resume"
-      >
-        <IconTrash size={18} stroke={1.5} className="text-red-500" />
-      </button>
-      
-      <button 
-        onClick={handleImportPDF}
-        className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-900 hover:bg-gray-800'} text-white rounded-md px-4 py-1.5 transition-colors`}
-      >
-        <IconFileUpload size={18} stroke={1.5} />
-        <span className="text-sm font-medium">Import PDF</span>
-      </button>
-    </div>
-  </div>
-</div>
 
       {/* Main Resume Editor */}
       <div className="max-w-7xl mx-auto p-4">
         <div className={`${styles.resumePage} min-h-[1140px] w-[1000px] bg-white shadow-md mx-auto`}>
-          {/* Header Section */}
           <ResumeHeader
             name={name}
             contact={contact}
-            setName={setName}
-            updateContact={updateContact}
+            setName={handleUpdateName}
+            updateContact={handleUpdateContact}
           />
 
-          {/* Education Section */}
-          <EducationSection 
+          <EducationSection
             educations={sections.education.map(edu => ({
               id: edu.id,
               school: edu.school,
@@ -352,8 +363,7 @@ const ResumeEditor: React.FC = () => {
             deleteSection={(id) => handleDeleteSection('education', id)}
           />
 
-          {/* Experience Section */}
-          <ExperienceSection 
+          <ExperienceSection
             experiences={sections.experience.map(exp => ({
               id: exp.id,
               title: exp.title,
@@ -372,8 +382,7 @@ const ResumeEditor: React.FC = () => {
             deleteSection={(id) => handleDeleteSection('experience', id)}
           />
 
-          {/* Projects Section */}
-          <ProjectsSection 
+          <ProjectsSection
             projects={sections.projects.map(project => ({
               id: project.id,
               name: project.name,
@@ -391,7 +400,6 @@ const ResumeEditor: React.FC = () => {
             deleteSection={(id) => handleDeleteSection('projects', id)}
           />
 
-          {/* Additional Section */}
           <AdditionalSection
             sectionTitle={sections.additionalTitle}
             updateSectionTitle={(value) => handleUpdateSectionTitle('additionalTitle', value)}
@@ -401,6 +409,9 @@ const ResumeEditor: React.FC = () => {
             deleteSection={(id) => handleDeleteSection('skills', id)}
           />
         </div>
+        
+        {/* Uncomment for debugging */}
+        {/* {renderHistoryDebug()} */}
       </div>
     </div>
   );

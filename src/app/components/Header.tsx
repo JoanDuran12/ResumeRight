@@ -1,11 +1,12 @@
 'use client'
 
-import { IconSun, IconMoon } from "@tabler/icons-react";
+import { IconSun, IconMoon, IconDownload, IconDeviceFloppy } from "@tabler/icons-react";
 import Link from "next/link";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 const navItems = [
   {
@@ -23,11 +24,15 @@ const navItems = [
   },
 ];
 
-function Header() {
+function Header({ onDownloadPDF, onSaveResume }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const pathname = usePathname();
+  
+  // Check if we're on the editor page
+  const isEditorPage = pathname === "/editor" || pathname?.startsWith("/editor/");
   
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -67,21 +72,23 @@ function Header() {
             </Link>
           </div>
           
-          {/* Navigation */}
-          <nav className="hidden md:flex">
-            <div className="flex items-center space-x-1">
-              {navItems.map((item) => (
-                <a 
-                  key={item.title}
-                  className="px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  href={item.href}
-                  target={item.target}
-                >
-                  {item.title}
-                </a>
-              ))}
-            </div>
-          </nav>
+          {/* Navigation - Only shown if not on editor page */}
+          {!isEditorPage && (
+            <nav className="hidden md:flex">
+              <div className="flex items-center space-x-1">
+                {navItems.map((item) => (
+                  <a 
+                    key={item.title}
+                    className="px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    href={item.href}
+                    target={item.target}
+                  >
+                    {item.title}
+                  </a>
+                ))}
+              </div>
+            </nav>
+          )}
           
           {/* Right Side - User Controls */}
           <div className="flex items-center gap-3">
@@ -105,6 +112,31 @@ function Header() {
                     Dashboard
                   </div>
                 </Link>
+                
+                {/* Editor page buttons - only shown on editor page */}
+                {isEditorPage && (
+                  <>
+                    {/* Save button */}
+                    <button 
+                      onClick={onSaveResume}
+                      className="border border-gray-200 dark:border-gray-700 bg-white hover:bg-gray-50 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
+                      title="Save resume"
+                    >
+                      <IconDeviceFloppy size={18} />
+                      <span>Save</span>
+                    </button>
+                    
+                    {/* Download PDF button */}
+                    <button 
+                      onClick={onDownloadPDF}
+                      className="border border-gray-200 dark:border-gray-700 bg-white hover:bg-gray-50 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
+                      title="Download as PDF"
+                    >
+                      <IconDownload size={18} />
+                      <span>Download</span>
+                    </button>
+                  </>
+                )}
                 
                 <div className="relative" ref={dropdownRef}>
                   <button 
@@ -159,7 +191,7 @@ function Header() {
                 
                 <Link href="/homepage">
                   <div className="bg-gray-900 hover:bg-gray-800 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors">
-                    Sign up
+                    Get Started
                   </div>
                 </Link>
               </>
