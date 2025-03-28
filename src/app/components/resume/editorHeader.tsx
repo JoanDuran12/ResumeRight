@@ -11,7 +11,7 @@ import { useAuth } from "@/app/contexts/AuthContext";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import Image from "next/image";
-import { downloadElementAsPDF } from "../Download";
+import { downloadElementAsPDF } from "../../download/Download";
 
 function EditorPageHeader() {
   const { user, logout } = useAuth();
