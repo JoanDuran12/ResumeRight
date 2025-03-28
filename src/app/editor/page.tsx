@@ -11,7 +11,7 @@ export default function EditorPage() {
       <div>
         <JobDescription />
       </div>
-      <div className="flex justify-center py-8 px-4 gap-x-4">
+      <div className="flex justify-center py-8 px-4 gap-x-4 bg-slate-100">
         <div className="bg-white shadow-md">
           <ResumeEditor />
         </div>
