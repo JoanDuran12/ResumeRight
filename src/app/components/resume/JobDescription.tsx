@@ -25,7 +25,7 @@ function JobDescription() {
     <div
       className={`fixed top-1/6 bg-white rounded-xl z-999 ${
         isExpanded ? "w-80 h-[480] px-4 left-[-8px]" : "w-24 left-[-36px]"
-      } transition-all duration-300 border `}
+      } transition-all duration-300 border border-gray-200`}
     >
       <div className="flex p-4">
         <h2

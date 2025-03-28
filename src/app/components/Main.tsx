@@ -3,7 +3,7 @@ import Link from "next/link";
 
 function Main() {
   return (
-    <section className="w-full py-12 px-24 md:py-12 lg:py-24 xl:py-32 flex items-center justify-center">
+    <section className="w-full py-12 px-24 md:py-12 flex items-center justify-center">
       <div className="container px-4 md:px-6">
         <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
           <div className="flex flex-col justify-center space-y-4">
