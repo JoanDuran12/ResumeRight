@@ -227,7 +227,7 @@ const ResumeEditor: React.FC = () => {
   }, []);
 
   return (
-    <div className={`${styles.resumePage} min-h-[1140px] w-[1000px]`}>  
+    <div id="convertPDF" className={`${styles.resumePage} min-h-[1140px] w-[1000px]`}>  
       {/* Header Section */}
       <div className={styles.resumeHeader}>
         <h1 

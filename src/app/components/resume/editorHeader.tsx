@@ -11,6 +11,7 @@ import { useAuth } from "@/app/contexts/AuthContext";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import Image from "next/image";
+import { downloadElementAsPDF } from "../Download";
 
 function EditorPageHeader() {
   const { user, logout } = useAuth();
@@ -38,6 +39,14 @@ function EditorPageHeader() {
     setDropdownOpen(false);
   };
 
+  const [pdfElement, setPdfElement] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    // Get the convertPDF element after the component mounts
+    const element = document.getElementById("convertPDF");
+    setPdfElement(element);
+  }, []);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-300 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-center">
       <div className="container flex h-16 items-center justify-between px-24">
@@ -59,8 +68,18 @@ function EditorPageHeader() {
           <div className="flex items-center gap-x-2 border bg-black text-white px-3 py-2 rounded-md text-sm hover:bg-black/80 transition-colors">
             <IconFileCheck stroke={2} /> Save
           </div>
-          <div className="flex items-center gap-x-2 border bg-black text-white px-3 py-2 rounded-md text-sm hover:bg-black/80 transition-colors">
-            <IconDownload stroke={2} /> Download
+          <div
+            className="flex items-center gap-x-2 border bg-black text-white px-3 py-2 rounded-md text-sm hover:bg-black/80 transition-colors"
+            onClick={() => {
+              if (pdfElement) {
+                downloadElementAsPDF(pdfElement);
+              } else {
+                console.error("PDF element not found");
+              }
+            }}
+          >
+            <IconDownload stroke={2} />
+            Download
           </div>
         </nav>
         <div className="flex items-center gap-4">
