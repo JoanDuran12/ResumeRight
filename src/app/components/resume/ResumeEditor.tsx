@@ -594,7 +594,6 @@ const ResumeEditor: React.FC = () => {
               </div>
             </div>
           ))}
-          {/* Testing */}
         </div>
         {/* Don't think we need 2 buttons to add the same section to the resume template */}
         {/* <button
