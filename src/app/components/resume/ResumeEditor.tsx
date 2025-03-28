@@ -3,177 +3,161 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useResume } from '@/app/contexts/ResumeContext';
 import styles from '@/app/resume.module.css';
-
-interface Bullet {
-  id: string;
-  text: string;
-}
-
-interface Section {
-  id: string;
-  bullets: Bullet[];
-}
-
-interface Skill {
-  id: string;
-  category: string;
-  skills: string;
-}
-
-interface Sections {
-  education: Section[];
-  experience: Section[];
-  projects: Section[];
-  skills: Skill[];
-}
-
-interface HistoryState {
-  past: Sections[];
-  present: Sections;
-  future: Sections[];
-}
+import EditableText from './components/EditableText';
+import ProjectsSection from './components/ProjectsSection';
+import ExperienceSection from './components/ExperienceSection';
+import EducationSection from './components/EducationSection';
+import ResumeHeader from './components/ResumeHeader';
+import AdditionalSection from './components/AdditionalSection';
+import {
+  Contact,
+  HistoryState,
+  Sections,
+  getInitialHistoryState,
+  undo,
+  redo,
+  deleteSection,
+  deleteBullet,
+  addBullet,
+  addSkillCategory,
+  addSection,
+  updateEducation,
+  updateEducationBullet,
+  updateExperience,
+  updateExperienceBullet,
+  updateProject,
+  updateProjectBullet,
+  updateSkill,
+  updateSectionTitle
+} from './resumeEditor';
 
 const ResumeEditor: React.FC = () => {
   const { currentResume, updateContent } = useResume();
-  const [history, setHistory] = useState<HistoryState>({
-    past: [],
-    present: {
-      education: [{ 
-        id: '1',
-        bullets: [
-          { id: crypto.randomUUID(), text: '' },
-          { id: crypto.randomUUID(), text: '' },
-          { id: crypto.randomUUID(), text: '' }
-        ]
-      }],
-      experience: [{ 
-        id: '1',
-        bullets: [
-          { id: crypto.randomUUID(), text: '' },
-          { id: crypto.randomUUID(), text: '' },
-          { id: crypto.randomUUID(), text: '' }
-        ]
-      }],
-      projects: [{ 
-        id: '1',
-        bullets: [
-          { id: crypto.randomUUID(), text: '' },
-          { id: crypto.randomUUID(), text: '' },
-          { id: crypto.randomUUID(), text: '' }
-        ]
-      }],
-      skills: [
-        { id: crypto.randomUUID(), category: 'Category', skills: '' },
-        { id: crypto.randomUUID(), category: 'Category', skills: '' },
-        { id: crypto.randomUUID(), category: 'Category', skills: '' }
-      ]
-    },
-    future: []
+  const [name, setName] = useState('');
+  const [contact, setContact] = useState<Contact>({
+    phone: '',
+    email: '',
+    website: '',
+    linkedin: '',
+    github: ''
   });
+  const [history, setHistory] = useState<HistoryState>(getInitialHistoryState());
 
   const sections = history.present;
 
-  const updateHistory = useCallback((newPresent: any) => {
-    setHistory(prev => ({
-      past: [...prev.past, prev.present],
-      present: newPresent,
-      future: []
-    }));
+  const updateContact = (field: string, value: string) => {
+    setContact(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleUndo = useCallback(() => {
+    undo(setHistory);
   }, []);
 
-  const undo = useCallback(() => {
-    setHistory(prev => {
-      if (prev.past.length === 0) return prev;
-      
-      const previous = prev.past[prev.past.length - 1];
-      const newPast = prev.past.slice(0, prev.past.length - 1);
-      
-      return {
-        past: newPast,
-        present: previous,
-        future: [prev.present, ...prev.future]
-      };
-    });
+  const handleRedo = useCallback(() => {
+    redo(setHistory);
   }, []);
 
-  const redo = useCallback(() => {
-    setHistory(prev => {
-      if (prev.future.length === 0) return prev;
-      
-      const next = prev.future[0];
-      const newFuture = prev.future.slice(1);
-      
-      return {
-        past: [...prev.past, prev.present],
-        present: next,
-        future: newFuture
-      };
-    });
-  }, []);
-
-  const deleteSection = (sectionType: 'education' | 'experience' | 'projects' | 'skills', id: string) => {
-    const newSections = {
-      ...sections,
-      [sectionType]: sections[sectionType].filter(item => item.id !== id)
-    };
-    updateHistory(newSections);
+  const handleDeleteSection = (sectionType: 'education' | 'experience' | 'projects' | 'skills', id: string) => {
+    deleteSection(sections, sectionType, id, setHistory);
   };
 
-  const deleteBullet = (sectionType: 'education' | 'experience' | 'projects', sectionId: string, bulletId: string) => {
-    const newSections = {
-      ...sections,
-      [sectionType]: sections[sectionType].map(section => {
-        if (section.id === sectionId) {
-          return {
-            ...section,
-            bullets: section.bullets.filter(bullet => bullet.id !== bulletId)
-          };
-        }
-        return section;
-      })
-    };
-    updateHistory(newSections);
+  const handleDeleteBullet = (sectionType: 'education' | 'experience' | 'projects', sectionId: string, bulletId: string) => {
+    deleteBullet(sections, sectionType, sectionId, bulletId, setHistory);
   };
 
-  const addBullet = (sectionType: 'education' | 'experience' | 'projects', sectionId: string) => {
-    const newSections = {
-      ...sections,
-      [sectionType]: sections[sectionType].map(section => {
-        if (section.id === sectionId) {
-          return {
-            ...section,
-            bullets: [...section.bullets, { id: crypto.randomUUID(), text: '' }]
-          };
-        }
-        return section;
-      })
-    };
-    updateHistory(newSections);
+  const handleAddBullet = (sectionType: 'education' | 'experience' | 'projects', sectionId: string) => {
+    addBullet(sections, sectionType, sectionId, setHistory);
   };
 
-  const addSkillCategory = () => {
-    const newSections = {
-      ...sections,
-      skills: [...sections.skills, { id: crypto.randomUUID(), category: 'New Category', skills: '' }]
-    };
-    updateHistory(newSections);
+  const handleAddSkillCategory = () => {
+    addSkillCategory(sections, setHistory);
   };
 
-  const addSection = (sectionType: 'education' | 'experience' | 'projects') => {
-    const newSection = {
-      id: crypto.randomUUID(),
-      bullets: [
-        { id: crypto.randomUUID(), text: '' },
-        { id: crypto.randomUUID(), text: '' },
-        { id: crypto.randomUUID(), text: '' }
-      ]
-    };
+  const handleAddSection = (sectionType: 'education' | 'experience' | 'projects') => {
+    addSection(sections, sectionType, setHistory);
+  };
+
+  const handleUpdateEducation = (index: number, field: string, value: string) => {
+    updateEducation(sections, index, field, value, setHistory);
+  };
+
+  const handleUpdateEducationBullet = (eduIndex: number, bulletIndex: number, value: string) => {
+    updateEducationBullet(sections, eduIndex, bulletIndex, value, setHistory);
+  };
+
+  const deleteEducationBullet = (eduIndex: number, bulletIndex: number) => {
+    const eduId = sections.education[eduIndex]?.id;
+    const bulletId = sections.education[eduIndex]?.bullets[bulletIndex]?.id;
     
-    const newSections = {
-      ...sections,
-      [sectionType]: [...sections[sectionType], newSection]
-    };
-    updateHistory(newSections);
+    if (eduId && bulletId) {
+      handleDeleteBullet('education', eduId, bulletId);
+    }
+  };
+
+  const addEducationBullet = (eduIndex: number) => {
+    const eduId = sections.education[eduIndex]?.id;
+    
+    if (eduId) {
+      handleAddBullet('education', eduId);
+    }
+  };
+
+  const handleUpdateExperience = (index: number, field: string, value: string) => {
+    updateExperience(sections, index, field, value, setHistory);
+  };
+
+  const handleUpdateExperienceBullet = (expIndex: number, bulletIndex: number, value: string) => {
+    updateExperienceBullet(sections, expIndex, bulletIndex, value, setHistory);
+  };
+
+  const deleteExperienceBullet = (expIndex: number, bulletIndex: number) => {
+    const expId = sections.experience[expIndex]?.id;
+    const bulletId = sections.experience[expIndex]?.bullets[bulletIndex]?.id;
+    
+    if (expId && bulletId) {
+      handleDeleteBullet('experience', expId, bulletId);
+    }
+  };
+
+  const addExperienceBullet = (expIndex: number) => {
+    const expId = sections.experience[expIndex]?.id;
+    
+    if (expId) {
+      handleAddBullet('experience', expId);
+    }
+  };
+
+  const handleUpdateProject = (index: number, field: string, value: string) => {
+    updateProject(sections, index, field, value, setHistory);
+  };
+
+  const handleUpdateProjectBullet = (projIndex: number, bulletIndex: number, value: string) => {
+    updateProjectBullet(sections, projIndex, bulletIndex, value, setHistory);
+  };
+
+  const deleteProjectBullet = (projIndex: number, bulletIndex: number) => {
+    const projectId = sections.projects[projIndex]?.id;
+    const bulletId = sections.projects[projIndex]?.bullets[bulletIndex]?.id;
+    
+    if (projectId && bulletId) {
+      handleDeleteBullet('projects', projectId, bulletId);
+    }
+  };
+
+  const addProjectBullet = (projIndex: number) => {
+    const projectId = sections.projects[projIndex]?.id;
+    
+    if (projectId) {
+      handleAddBullet('projects', projectId);
+    }
+  };
+
+  const handleUpdateSkill = (index: number, field: string, value: string) => {
+    updateSkill(sections, index, field, value, setHistory);
+  };
+
+  const handleUpdateSectionTitle = (sectionType: 'additionalTitle' | 'educationTitle' | 'experienceTitle' | 'projectsTitle', value: string) => {
+    updateSectionTitle(sections, sectionType, value, setHistory);
   };
 
   useEffect(() => {
@@ -181,393 +165,96 @@ const ResumeEditor: React.FC = () => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         if (e.shiftKey) {
           e.preventDefault();
-          redo();
+          handleRedo();
         } else {
           e.preventDefault();
-          undo();
+          handleUndo();
         }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo]);
-
-  useEffect(() => {
-    // Set initial empty state for all contentEditable elements
-    const contentEditableElements = document.querySelectorAll('[contenteditable]');
-    contentEditableElements.forEach(element => {
-      if (!element.textContent?.trim()) {
-        element.setAttribute('data-empty', 'true');
-      }
-    });
-
-    const handleBlur = (e: FocusEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.hasAttribute('contenteditable') && !target.textContent?.trim()) {
-        target.setAttribute('data-empty', 'true');
-      } else {
-        target.removeAttribute('data-empty');
-      }
-    };
-
-    const handleInput = (e: Event) => {
-      const target = e.target as HTMLElement;
-      if (target.hasAttribute('contenteditable')) {
-        target.removeAttribute('data-empty');
-      }
-    };
-
-    document.addEventListener('blur', handleBlur, true);
-    document.addEventListener('input', handleInput, true);
-    return () => {
-      document.removeEventListener('blur', handleBlur, true);
-      document.removeEventListener('input', handleInput, true);
-    };
-  }, []);
+  }, [handleUndo, handleRedo]);
 
   return (
     <div className={`${styles.resumePage} min-h-[1140px] w-[1000px]`}>  
       {/* Header Section */}
-      <div className={styles.resumeHeader}>
-        <h1 
-          className={`${styles.resumeName} ${styles.editableField} ${styles.titleField}`} 
-          contentEditable 
-          aria-label="Your Name" 
-          data-placeholder="Your Name"
-        ></h1>
-        <div className={`${styles.resumeContact} flex justify-center items-center gap-2`}>
-          <span 
-            className={styles.editableField} 
-            contentEditable 
-            aria-label="Phone number" 
-            data-placeholder="123-456-7890"
-          ></span>
-          {" | "}
-          <div className={styles.contactItem}>
-            <span 
-              className={styles.editableField} 
-              contentEditable 
-              aria-label="Email address" 
-              data-placeholder="youremail@gmail.com"
-            ></span>
-          </div>
-          {" | "}
-          <div className={styles.contactItem}>
-            <span 
-              className={styles.editableField} 
-              contentEditable 
-              aria-label="Website" 
-              data-placeholder="yourwebsite.com"
-            ></span>
-          </div>
-          {" | "}
-          <div className={styles.contactItem}>
-            <span className={styles.contactPrefix}>linkedin.com/in/</span>
-            <span 
-              className={`${styles.contactValue} ${styles.editableField}`} 
-              contentEditable 
-              aria-label="LinkedIn username" 
-              data-placeholder="username"
-            ></span>
-          </div>
-          {" | "}
-          <div className={styles.contactItem}>
-            <span className={styles.contactPrefix}>github.com/</span>
-            <span 
-              className={`${styles.contactValue} ${styles.editableField}`} 
-              contentEditable 
-              aria-label="GitHub username" 
-              data-placeholder="username"
-            ></span>
-          </div>
-        </div>
-      </div>
+      <ResumeHeader
+        name={name}
+        contact={contact}
+        setName={setName}
+        updateContact={updateContact}
+      />
 
       {/* Education Section */}
-      <div className={styles.resumeSection}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.resumeSectionTitle}>Education</h2>
-          <button 
-            className={styles.addNewButton}
-            onClick={() => addSection('education')}
-            aria-label="Add new education entry"
-          >
-            + Add New
-          </button>
-        </div>
-        {sections.education.map((item) => (
-          <div key={item.id} className={styles.resumeItem}>
-            <button 
-              className={styles.deleteButton}
-              onClick={() => deleteSection('education', item.id)}
-              aria-label="Delete education entry"
-            >
-              ×
-            </button>
-            <div className={styles.resumeItemHeader}>
-              <div>
-                <span 
-                  className={`${styles.resumeItemTitle} ${styles.editableField} ${styles.titleField}`} 
-                  contentEditable 
-                  aria-label="Institution name" 
-                  data-placeholder="Name of institution"
-                ></span>
-                <button 
-                  className={styles.addBulletButton}
-                  onClick={() => addBullet('education', item.id)}
-                  aria-label="Add new bullet point"
-                >
-                  +
-                </button>
-              </div>
-              <span 
-                className={`${styles.resumeItemLocation} ${styles.editableField}`} 
-                contentEditable 
-                aria-label="Location" 
-                data-placeholder="Location"
-              ></span>
-            </div>
-            <div className={styles.resumeItemSubheader}>
-              <span 
-                className={`${styles.resumeItemOrg} ${styles.editableField} ${styles.italicField}`} 
-                contentEditable 
-                aria-label="Degree" 
-                data-placeholder="Degree"
-              ></span>
-              <span 
-                className={`${styles.resumeItemDate} ${styles.editableField} ${styles.dateField}`} 
-                contentEditable 
-                aria-label="Date range" 
-                data-placeholder="Select a date range"
-              ></span>
-            </div>
-            <ul className={styles.resumeBullets}>
-              {item.bullets.map((bullet) => (
-                <li key={bullet.id}>
-                  <button 
-                    className={styles.bulletDeleteButton}
-                    onClick={() => deleteBullet('education', item.id, bullet.id)}
-                    aria-label="Delete bullet point"
-                  >
-                    ×
-                  </button>
-                  <span 
-                    className={styles.editableField} 
-                    contentEditable 
-                    aria-label="Achievement" 
-                    data-placeholder="Write an achievement"
-                  ></span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+      <EducationSection 
+        educations={sections.education.map(edu => ({
+          id: edu.id,
+          school: edu.school,
+          degree: edu.degree,
+          location: edu.location,
+          dates: edu.dates,
+          bullets: edu.bullets.map(bullet => bullet.text)
+        }))}
+        sectionTitle={sections.educationTitle}
+        updateSectionTitle={(value) => handleUpdateSectionTitle('educationTitle', value)}
+        updateEducation={handleUpdateEducation}
+        updateEducationBullet={handleUpdateEducationBullet}
+        deleteEducationBullet={deleteEducationBullet}
+        addEducationBullet={addEducationBullet}
+        onAddNew={() => handleAddSection('education')}
+        deleteSection={(id) => handleDeleteSection('education', id)}
+      />
 
       {/* Experience Section */}
-      <div className={styles.resumeSection}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.resumeSectionTitle}>Experience</h2>
-          <button 
-            className={styles.addNewButton}
-            onClick={() => addSection('experience')}
-            aria-label="Add new experience entry"
-          >
-            + Add New
-          </button>
-        </div>
-        {sections.experience.map((item) => (
-          <div key={item.id} className={styles.resumeItem}>
-            <button 
-              className={styles.deleteButton}
-              onClick={() => deleteSection('experience', item.id)}
-              aria-label="Delete experience entry"
-            >
-              ×
-            </button>
-            <div className={styles.resumeItemHeader}>
-              <div>
-                <span 
-                  className={`${styles.resumeItemTitle} ${styles.editableField} ${styles.titleField}`} 
-                  contentEditable 
-                  aria-label="Job position" 
-                  data-placeholder="Job Position"
-                ></span>
-                <button 
-                  className={styles.addBulletButton}
-                  onClick={() => addBullet('experience', item.id)}
-                  aria-label="Add new bullet point"
-                >
-                  +
-                </button>
-              </div>
-              <span 
-                className={`${styles.resumeItemLocation} ${styles.editableField}`} 
-                contentEditable 
-                aria-label="Location" 
-                data-placeholder="Location"
-              ></span>
-            </div>
-            <div className={styles.resumeItemSubheader}>
-              <span 
-                className={`${styles.resumeItemOrg} ${styles.editableField} ${styles.italicField}`} 
-                contentEditable 
-                aria-label="Company name" 
-                data-placeholder="Company Name"
-              ></span>
-              <span 
-                className={`${styles.resumeItemDate} ${styles.editableField} ${styles.dateField}`} 
-                contentEditable 
-                aria-label="Date range" 
-                data-placeholder="Select a date range"
-              ></span>
-            </div>
-            <ul className={styles.resumeBullets}>
-              {item.bullets.map((bullet) => (
-                <li key={bullet.id}>
-                  <button 
-                    className={styles.bulletDeleteButton}
-                    onClick={() => deleteBullet('experience', item.id, bullet.id)}
-                    aria-label="Delete bullet point"
-                  >
-                    ×
-                  </button>
-                  <span 
-                    className={styles.editableField} 
-                    contentEditable 
-                    aria-label="Accomplishment" 
-                    data-placeholder="Write an accomplishment"
-                  ></span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+      <ExperienceSection 
+        experiences={sections.experience.map(exp => ({
+          id: exp.id,
+          title: exp.title,
+          organization: exp.organization,
+          location: exp.location,
+          dates: exp.dates,
+          bullets: exp.bullets.map(bullet => bullet.text)
+        }))}
+        sectionTitle={sections.experienceTitle}
+        updateSectionTitle={(value) => handleUpdateSectionTitle('experienceTitle', value)}
+        updateExperience={handleUpdateExperience}
+        updateExperienceBullet={handleUpdateExperienceBullet}
+        deleteExperienceBullet={deleteExperienceBullet}
+        addExperienceBullet={addExperienceBullet}
+        onAddNew={() => handleAddSection('experience')}
+        deleteSection={(id) => handleDeleteSection('experience', id)}
+      />
 
       {/* Projects Section */}
-      <div className={styles.resumeSection}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.resumeSectionTitle}>Projects</h2>
-          <button 
-            className={styles.addNewButton}
-            onClick={() => addSection('projects')}
-            aria-label="Add new project entry"
-          >
-            + Add New
-          </button>
-        </div>
-        {sections.projects.map((item) => (
-          <div key={item.id} className={styles.resumeItem}>
-            <button 
-              className={styles.deleteButton}
-              onClick={() => deleteSection('projects', item.id)}
-              aria-label="Delete project entry"
-            >
-              ×
-            </button>
-            <div className={styles.resumeProjectHeader}>
-              <div>
-                <span 
-                  className={`${styles.resumeProjectTitle} ${styles.editableField} ${styles.titleField}`} 
-                  contentEditable 
-                  aria-label="Project title" 
-                  data-placeholder="Project title"
-                ></span>
-                <span> | </span>
-                <span 
-                  className={`${styles.resumeProjectTech} ${styles.editableField}`} 
-                  contentEditable 
-                  aria-label="Technologies used" 
-                  data-placeholder="Skills used"
-                ></span>
-                <button 
-                  className={styles.addBulletButton}
-                  onClick={() => addBullet('projects', item.id)}
-                  aria-label="Add new bullet point"
-                >
-                  +
-                </button>
-              </div>
-              <span 
-                className={`${styles.resumeItemDate} ${styles.editableField} ${styles.dateField}`} 
-                contentEditable 
-                aria-label="Date range" 
-                data-placeholder="Select a date range"
-              ></span>
-            </div>
-            <ul className={styles.resumeBullets}>
-              {item.bullets.map((bullet) => (
-                <li key={bullet.id}>
-                  <button 
-                    className={styles.bulletDeleteButton}
-                    onClick={() => deleteBullet('projects', item.id, bullet.id)}
-                    aria-label="Delete bullet point"
-                  >
-                    ×
-                  </button>
-                  <span 
-                    className={styles.editableField} 
-                    contentEditable 
-                    aria-label="Accomplishment" 
-                    data-placeholder="Write an accomplishment"
-                  ></span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+      <ProjectsSection 
+        projects={sections.projects.map(project => ({
+          id: project.id,
+          name: project.name,
+          tech: project.tech,
+          dates: project.dates,
+          bullets: project.bullets.map(bullet => bullet.text)
+        }))}
+        sectionTitle={sections.projectsTitle}
+        updateSectionTitle={(value) => handleUpdateSectionTitle('projectsTitle', value)}
+        updateProject={handleUpdateProject}
+        updateProjectBullet={handleUpdateProjectBullet}
+        deleteProjectBullet={deleteProjectBullet}
+        addProjectBullet={addProjectBullet}
+        onAddNew={() => handleAddSection('projects')}
+        deleteSection={(id) => handleDeleteSection('projects', id)}
+      />
 
       {/* Additional Section */}
-      <div className={styles.resumeSection}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.resumeSectionTitle}>Additional</h2>
-          <button 
-            className={styles.addNewButton}
-            onClick={addSkillCategory}
-            aria-label="Add new skill category"
-          >
-            + Add New
-          </button>
-        </div>
-        <div className={styles.resumeItem}>
-          {sections.skills.map((skill) => (
-            <div key={skill.id} className={styles.skillRow}>
-              <button 
-                className={styles.deleteButton}
-                onClick={() => deleteSection('skills', skill.id)}
-                aria-label="Delete skill category"
-              >
-                ×
-              </button>
-              <div>
-                <span 
-                  className={`${styles.resumeSkillsCategory} ${styles.editableField}`} 
-                  contentEditable 
-                  aria-label="Skill category"
-                  data-placeholder="Category"
-                ></span>
-                <span>: </span>
-                <span 
-                  className={`${styles.resumeSkillsList} ${styles.editableField}`} 
-                  contentEditable 
-                  aria-label="Skills list"
-                  data-placeholder="Key skills"
-                ></span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <button 
-          onClick={addSkillCategory}
-          className={styles.addButton}
-          aria-label="Add new skill category"
-        >
-          + Add Category
-        </button>
-      </div>
+      <AdditionalSection
+        sectionTitle={sections.additionalTitle}
+        updateSectionTitle={(value) => handleUpdateSectionTitle('additionalTitle', value)}
+        skills={sections.skills}
+        updateSkill={handleUpdateSkill}
+        addSkillCategory={handleAddSkillCategory}
+        deleteSection={(id) => handleDeleteSection('skills', id)}
+      />
     </div>
   );
 };

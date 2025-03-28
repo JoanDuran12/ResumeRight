@@ -1,4 +1,6 @@
-/* ResumeStyles.module.css */
+/* resume.module.css */
+
+/* --- Font Definitions --- */
 @font-face {
   font-family: 'Latin Modern Roman';
   src: url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/regular/lmroman10-regular.woff2') format('woff2'),
@@ -11,7 +13,7 @@
   font-family: 'Latin Modern Roman';
   src: url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/semibold/lmroman12-bold.woff2') format('woff2'),
        url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/semibold/lmroman12-bold.woff') format('woff');
-  font-weight: 600;
+  font-weight: 600; /* Semibold */
   font-style: normal;
 }
 
@@ -23,8 +25,7 @@
   font-style: italic;
 }
 
-/* Latin Modern Roman only */
-
+/* --- Base Page Layout --- */
 .resumePage {
   font-family: 'Latin Modern Roman', serif;
   font-size: 11pt;
@@ -38,6 +39,7 @@
   letter-spacing: normal;
 }
 
+/* --- Header --- */
 .resumeHeader {
   text-align: center;
 }
@@ -45,7 +47,7 @@
 .resumeName {
   font-family: 'Latin Modern Roman', serif;
   font-size: 24pt;
-  font-weight: 600; /* Softer weight */
+  font-weight: 600;
   text-transform: none;
   letter-spacing: normal;
   margin: 0;
@@ -80,19 +82,43 @@
   text-decoration: underline;
 }
 
-/* Remove any old border styles */
-.contactItem [contenteditable] {
-  text-decoration: underline;
-  cursor: text;
+.separator {
+  display: inline-block;
+  font-size: 1em;
+  line-height: 1;
+  margin: 0 0.2em;
+  position: relative;
+  top: 0;
+  font-weight: normal;
+  color: #666;
 }
 
 .resumeContact a {
   color: #000000;
 }
 
+/* --- Sections --- */
 .resumeSection {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   position: relative;
+}
+
+.resumeSection:last-child {
+  margin-bottom: 0;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.2em;
+  position: relative;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 0.1em;
+}
+
+.sectionHeader:hover .addNewButton {
+  opacity: 1;
 }
 
 .resumeSectionTitle {
@@ -107,39 +133,10 @@
   flex: 1;
 }
 
-.sectionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.3em;
-  position: relative;
-  border-bottom: 1px solid #000000;
-  padding-bottom: 0.1em;
-}
-
-.sectionHeader:hover .addNewButton {
-  opacity: 1;
-}
-
-.addNewButton {
-  background: #1a1a1a;
-  border: none;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11pt;
-  opacity: 0;
-  transition: all 0.2s ease-in-out;
-}
-
-.addNewButton:hover {
-  background: #333;
-}
-
+/* --- Items (Experience, Education etc.) --- */
 .resumeItem {
-  margin-top: 0.3em;
-  margin-bottom: 0.8em;
+  margin-top: 0.2em;
+  margin-bottom: 0.6em;
   position: relative;
 }
 
@@ -149,8 +146,14 @@
   margin-bottom: 0.1em;
 }
 
+.titleWithButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
 .resumeItemTitle {
-  font-weight: 600; /* Softer than bold (700) */
+  font-weight: 600;
 }
 
 .resumeItemLocation {
@@ -161,7 +164,7 @@
   display: flex;
   justify-content: space-between;
   font-style: italic;
-  margin-bottom: 0.3em;
+  margin-bottom: 0.2em;
 }
 
 .resumeItemOrg {
@@ -173,36 +176,116 @@
   font-style: italic;
 }
 
+/* --- Bullet Points --- */
 .resumeBullets {
-  list-style-type: disc;
-  padding-left: 1.2em;
+  list-style-type: none;
+  padding-left: 0.5em;
   padding-right: 1.2em;
-  margin-top: 0.2em;
+  margin-top: 0.15em;
   margin-bottom: 0;
 }
 
 .resumeBullets li {
-  margin-bottom: 0.2em;
-  padding-left: 0.2em;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.resumeBulletItem {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 0.15em;
   position: relative;
 }
 
-.resumeBullets li:last-child {
+.resumeBulletItem:last-child {
   margin-bottom: 0;
 }
 
-.resumeSection:last-child {
-  margin-bottom: 0;
+.bulletContainer {
+  width: 1.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 0.3em;
+  position: relative;
+  top: 0.1em;
 }
 
+.bulletPoint {
+  cursor: pointer;
+  font-size: 1.2em;
+  display: inline-block;
+  transition: color 0.2s ease;
+  user-select: none;
+  line-height: 1;
+}
+
+.deleteBullet {
+  color: #f44336;
+}
+
+/* --- Editable Content (REVISED AGAIN) --- */
+
+/* Base style for the editable SPAN in both EditableText and EditableBulletItem */
+.editableContent,
+.bulletContent {
+  position: relative; /* Needed for absolute positioning of ::before */
+  display: inline-block;
+  min-width: 1px;
+  width: 100%;
+  vertical-align: baseline;
+  line-height: inherit;
+  font: inherit;
+  color: inherit;
+  padding: 2px; /* Add padding for spacing inside the element */
+  /* border: 1px solid transparent; */ /* REMOVED - No longer needed */
+}
+
+/* Style applied ONLY WHEN editing */
+.editingContent {
+  /* REMOVED outline: none; */
+  /* REMOVED border: 1px dashed #aaa; */
+  /* Keep subtle background if desired, otherwise remove */
+  background-color: rgba(200, 200, 200, 0.05);
+  cursor: text;
+  /* Browser default outline will now apply on focus */
+}
+
+/* CSS Placeholder for contentEditable elements (REVISED SELECTOR & POSITIONING) */
+:is(.editableContent, .bulletContent)[contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  position: absolute; /* Position relative to the parent span */
+  left: 2px; /* Align with padding */
+  top: 2px;  /* Align with padding */
+  right: 2px; /* Allow text wrapping within placeholder */
+  color: #999;
+  cursor: text;
+  pointer-events: none; /* Allow clicks to pass through */
+  /* display: inline-block; -> Not needed with absolute positioning */
+  /* Prevent placeholder text itself from wrapping if too long */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Specific override for bullet content */
+.bulletContent {
+  flex: 1;
+  direction: ltr;
+  unicode-bidi: normal;
+  text-align: left;
+}
+
+/* --- Projects --- */
 .resumeProjectHeader {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.3em;
+  margin-bottom: 0.2em;
 }
 
 .resumeProjectTitle {
-  font-weight: 600; /* Softer weight */
+  font-weight: 600;
 }
 
 .resumeProjectTech {
@@ -210,10 +293,7 @@
   font-weight: normal;
 }
 
-/* .resumeSkills {
-  margin-top: 0.5em;
-} */
-
+/* --- Skills --- */
 .resumeSkillsCategory {
   font-weight: 600;
   display: inline;
@@ -226,21 +306,11 @@
 
 .skillRow {
   position: relative;
-  margin-bottom: 0.3em;
+  margin-bottom: 0.2em;
 }
 
 .skillRow:last-child {
   margin-bottom: 0;
-}
-
-.resumeSkillsCategory {
-  font-weight: 600;
-  display: inline;
-}
-
-.resumeSkillsList {
-  display: inline;
-  margin-left: 0.2em;
 }
 
 .skillRow .deleteButton {
@@ -248,53 +318,27 @@
   transform: translateY(-50%);
 }
 
-/* Placeholder styles for contentEditable elements */
-.editableField {
-  min-width: 1px; /* Ensures the element remains clickable when empty */
+/* --- Buttons & Actions --- */
+.addNewButton {
+  background: #1a1a1a;
+  border: none;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11pt;
+  opacity: 0;
+  transition: all 0.2s ease-in-out;
+  margin-left: 1em;
 }
 
-.editableField:empty::before {
-  content: attr(data-placeholder);
-  color: #999;
-  font-style: italic;
-  pointer-events: none;
-}
-
-.editableField:focus {
-  outline: none;
-}
-
-/* Preserve italic style for date fields even with placeholder */
-.dateField:empty::before {
-  font-style: italic;
-}
-
-/* Keep the font weight for titles even with placeholder */
-.titleField:empty::before {
-  font-weight: 600;
-}
-
-/* Keep italic style for specific fields even with placeholder */
-.italicField:empty::before {
-  font-style: italic;
-}
-
-/* Add proper spacing for print layout */
-@page {
-  margin: 0.5in;
-}
-
-@media print {
-  .resumePage {
-    padding: 0;
-    margin: 0;
-    max-width: none;
-  }
+.addNewButton:hover {
+  background: #333;
 }
 
 .deleteButton {
   position: absolute;
-  right: -30px;
+  right: -35px;
   top: 0;
   background: transparent;
   border: none;
@@ -305,9 +349,11 @@
   transition: opacity 0.2s;
   padding: 4px 8px;
   border-radius: 4px;
+  line-height: 1;
 }
 
-.resumeItem:hover .deleteButton {
+.resumeItem:hover .deleteButton,
+.skillRow:hover .deleteButton {
   opacity: 1;
 }
 
@@ -335,30 +381,36 @@
   color: #333;
 }
 
-.bulletDeleteButton {
-  position: absolute;
-  right: -25px;
-  top: 50%;
-  transform: translateY(-50%);
+.addBulletButton {
   background: transparent;
-  border: none;
+  border: 1px solid #1a1a1a;
+  color: #1a1a1a;
   cursor: pointer;
-  color: #f44336;
-  font-size: 14px;
+  font-size: 12pt;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
-  transition: opacity 0.2s;
-  padding: 2px 4px;
-  border-radius: 4px;
+  transition: all 0.2s;
+  line-height: 1;
+  margin-left: 0.5em;
 }
 
-.resumeBullets li:hover .bulletDeleteButton {
+.resumeItemHeader:hover .addBulletButton,
+.resumeProjectHeader:hover .addBulletButton {
   opacity: 1;
 }
 
-.bulletDeleteButton:hover {
-  background-color: rgba(244, 67, 54, 0.1);
+.addBulletButton:hover {
+  background: #1a1a1a;
+  color: white;
 }
 
+/* --- Undo/Redo --- */
 .undoRedoContainer {
   position: fixed;
   top: 20px;
@@ -394,31 +446,46 @@
   cursor: not-allowed;
 }
 
-.addBulletButton {
-  background: transparent;
-  border: 1px solid #1a1a1a;
-  color: #1a1a1a;
-  cursor: pointer;
-  font-size: 12pt;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  margin-left: 8px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: all 0.2s;
-  line-height: 1;
+/* --- Print Styles --- */
+@page {
+  margin: 0.5in;
 }
 
-.resumeItemHeader:hover .addBulletButton,
-.resumeProjectHeader:hover .addBulletButton {
-  opacity: 1;
-}
+@media print {
+  .resumePage {
+    padding: 0;
+    margin: 0;
+    max-width: none;
+    box-shadow: none;
+    border: none;
+  }
 
-.addBulletButton:hover {
-  background: #1a1a1a;
-  color: white;
+  .deleteButton,
+  .addButton,
+  .addBulletButton,
+  .addNewButton,
+  .undoRedoContainer,
+  .bulletPoint {
+    display: none !important;
+  }
+
+  .bulletContainer::before {
+    content: '•';
+    font-size: 1.2em;
+    display: inline-block;
+    line-height: 1;
+  }
+
+  /* Ensure editing styles and outlines are OFF for print */
+  .editingContent {
+    border: none !important; /* Changed from transparent */
+    background-color: transparent !important;
+    outline: none !important; /* Explicitly remove outline for print */
+  }
+
+  /* Hide CSS placeholders during print */
+ :is(.editableContent, .bulletContent)[contenteditable]:empty::before {
+    content: "" !important; /* Ensure it's hidden */
+    display: none !important;
+  }
 }

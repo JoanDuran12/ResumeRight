@@ -6,6 +6,7 @@ interface EditableTextProps {
   className?: string;
   multiline?: boolean;
   inline?: boolean;
+  placeholder?: string;
 }
 
 const EditableText: React.FC<EditableTextProps> = ({ 
@@ -13,7 +14,8 @@ const EditableText: React.FC<EditableTextProps> = ({
   onChange, 
   className, 
   multiline = false, 
-  inline = false 
+  inline = false,
+  placeholder = ''
 }) => {
   const [editing, setEditing] = useState(false);
   const [inputHeight, setInputHeight] = useState('auto');
@@ -57,6 +59,7 @@ const EditableText: React.FC<EditableTextProps> = ({
           onBlur={() => setEditing(false)}
           autoFocus
           className={className}
+          placeholder={placeholder}
           style={{
             width: '100%',
             background: 'transparent',
@@ -84,6 +87,7 @@ const EditableText: React.FC<EditableTextProps> = ({
         onBlur={() => setEditing(false)}
         autoFocus
         className={className}
+        placeholder={placeholder}
         style={{
           width: inline ? 'auto' : '100%',
           minWidth: inline ? `${Math.min(Math.max(value.length * 0.6, 1) * 8, 100)}px` : '40px',
@@ -112,7 +116,7 @@ const EditableText: React.FC<EditableTextProps> = ({
         whiteSpace: 'pre-wrap'
       }}
     >
-      {value}
+      {value || (placeholder && <span style={{ color: '#999' }}>{placeholder}</span>)}
     </div>
   );
 };

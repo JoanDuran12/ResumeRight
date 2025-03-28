@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from '@/app/resume.module.css';
 
 interface AddBulletButtonProps {
   onClick: () => void;
@@ -6,22 +7,13 @@ interface AddBulletButtonProps {
 
 const AddBulletButton: React.FC<AddBulletButtonProps> = ({ onClick }) => {
   return (
-    // <li>
-    //   <button 
-    //     onClick={onClick}
-    //     style={{
-    //       background: 'transparent',
-    //       border: '1px dashed #aaa',
-    //       cursor: 'pointer',
-    //       padding: '2px 6px',
-    //       fontSize: '10px',
-    //       marginTop: '5px'
-    //     }}
-    //   >
-    //     + Add bullet
-    //   </button>
-    // </li>
-    <></>
+    <button 
+      className={styles.addBulletButton}
+      onClick={onClick}
+      aria-label="Add new bullet point"
+    >
+      +
+    </button>
   );
 };
 
