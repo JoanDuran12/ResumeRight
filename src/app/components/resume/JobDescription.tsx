@@ -55,7 +55,7 @@ function JobDescription() {
             value={jobDescription}
             onChange={handleDescriptionChange}
             placeholder="Enter the job description"
-            className="w-full h-full border-2 border-black rounded-sm px-4 py-4 resize-none"
+            className="w-full h-full border border-black rounded-sm px-4 py-4 resize-none"
           />
         </div>
       )}
