@@ -82,7 +82,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
               onChange={(value) => updateExperience(expIndex, 'dates', value)}
               className={styles.resumeItemDate}
               inline={true}
-              placeholder="Select a date range"
+              placeholder="Enter a date"
             />
           </div>
           <ul className={styles.resumeBullets}>

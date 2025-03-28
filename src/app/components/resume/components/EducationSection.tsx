@@ -82,7 +82,7 @@ const EducationSection: React.FC<EducationSectionProps> = ({
               onChange={(value) => updateEducation(eduIndex, 'dates', value)}
               className={styles.resumeItemDate}
               inline={true}
-              placeholder="Select a date range"
+              placeholder="Enter a date"
             />
           </div>
           <ul className={styles.resumeBullets}>

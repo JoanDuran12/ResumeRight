@@ -196,6 +196,17 @@ export const addSection = (
         { id: crypto.randomUUID(), text: '' }
       ]
     };
+  } else if (sectionType === 'education') {
+    newSection = {
+      id: crypto.randomUUID(),
+      school: '',
+      degree: '',
+      location: '',
+      dates: '',
+      bullets: [
+        { id: crypto.randomUUID(), text: '' },
+      ]
+    };
   } else {
     newSection = {
       id: crypto.randomUUID(),
@@ -425,8 +436,6 @@ export const getInitialHistoryState = (): HistoryState => ({
       dates: '',
       bullets: [
         { id: crypto.randomUUID(), text: '' },
-        { id: crypto.randomUUID(), text: '' },
-        { id: crypto.randomUUID(), text: '' }
       ]
     }],
     experience: [{ 
@@ -463,4 +472,68 @@ export const getInitialHistoryState = (): HistoryState => ({
     projectsTitle: 'Projects'
   },
   future: []
-}); 
+});
+
+// Save the current state to localStorage
+export const saveToLocalStorage = (sections: Sections, name: string, contact: Contact) => {
+  try {
+    const dataToSave = {
+      sections,
+      name,
+      contact,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem('resumeEditorData', JSON.stringify(dataToSave));
+  } catch (err) {
+    console.error('Error saving to localStorage:', err);
+  }
+};
+
+// Load state from localStorage
+export const loadFromLocalStorage = (): { 
+  sections: Sections | null, 
+  name: string, 
+  contact: Contact 
+} => {
+  try {
+    const savedData = localStorage.getItem('resumeEditorData');
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      return {
+        sections: parsed.sections,
+        name: parsed.name || '',
+        contact: parsed.contact || {
+          phone: '',
+          email: '',
+          website: '',
+          linkedin: '',
+          github: ''
+        }
+      };
+    }
+  } catch (err) {
+    console.error('Error loading from localStorage:', err);
+  }
+  
+  // Return defaults if nothing in localStorage or error
+  return {
+    sections: null,
+    name: '',
+    contact: {
+      phone: '',
+      email: '',
+      website: '',
+      linkedin: '',
+      github: ''
+    }
+  };
+};
+
+// Clear localStorage data
+export const clearLocalStorage = () => {
+  try {
+    localStorage.removeItem('resumeEditorData');
+  } catch (err) {
+    console.error('Error clearing localStorage:', err);
+  }
+};

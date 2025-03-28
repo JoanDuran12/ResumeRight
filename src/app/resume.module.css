@@ -34,7 +34,7 @@
   max-width: 8.5in;
   margin: 0 auto;
   padding: 0.5in;
-  line-height: 1.4;
+  line-height: 1.3; /* Reduced from 1.4 for tighter spacing */
   word-spacing: normal;
   letter-spacing: normal;
 }
@@ -99,7 +99,7 @@
 
 /* --- Sections --- */
 .resumeSection {
-  margin-bottom: 1rem;
+  margin-bottom: 0.9rem; /* Slightly reduced from 1rem */
   position: relative;
 }
 
@@ -136,14 +136,14 @@
 /* --- Items (Experience, Education etc.) --- */
 .resumeItem {
   margin-top: 0.2em;
-  margin-bottom: 0.6em;
+  margin-bottom: 0.5em; /* Reduced from 0.6em */
   position: relative;
 }
 
 .resumeItemHeader {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.1em;
+  margin-bottom: 0.1em; /* Reduced from original */
 }
 
 .titleWithButton {
@@ -164,7 +164,7 @@
   display: flex;
   justify-content: space-between;
   font-style: italic;
-  margin-bottom: 0.2em;
+  margin-bottom: 0.15em; /* Reduced from 0.2em */
 }
 
 .resumeItemOrg {
@@ -181,7 +181,7 @@
   list-style-type: none;
   padding-left: 0.5em;
   padding-right: 1.2em;
-  margin-top: 0.15em;
+  margin-top: 0.07em; /* Reduced significantly from 0.15em */
   margin-bottom: 0;
 }
 
@@ -191,9 +191,9 @@
 }
 
 .resumeBulletItem {
-  display: flex;
+  display: inline-flex;
   align-items: baseline;
-  margin-bottom: 0.15em;
+  margin-bottom: 0.07em; /* Reduced from 0.15em */
   position: relative;
 }
 
@@ -281,7 +281,7 @@
 .resumeProjectHeader {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.2em;
+  margin-bottom: 0.15em; /* Reduced from 0.2em */
 }
 
 .resumeProjectTitle {
@@ -306,7 +306,7 @@
 
 .skillRow {
   position: relative;
-  margin-bottom: 0.2em;
+  margin-bottom: 0.15em; /* Reduced from 0.2em */
 }
 
 .skillRow:last-child {
@@ -371,7 +371,7 @@
   font-size: 11pt;
   cursor: pointer;
   border-radius: 4px;
-  margin-top: 8px;
+  margin-top: 6px; /* Reduced from 8px */
   transition: all 0.2s;
 }
 

@@ -9,6 +9,16 @@ import ExperienceSection from './components/ExperienceSection';
 import EducationSection from './components/EducationSection';
 import ResumeHeader from './components/ResumeHeader';
 import AdditionalSection from './components/AdditionalSection';
+import { useTheme } from '@/app/contexts/ThemeContext';
+import { 
+  IconUser, 
+  IconLayoutList, 
+  IconChevronDown, 
+  IconArrowBackUp, 
+  IconArrowForwardUp, 
+  IconTrash, 
+  IconFileUpload 
+} from '@tabler/icons-react';
 import {
   Contact,
   HistoryState,
@@ -28,8 +38,13 @@ import {
   updateProject,
   updateProjectBullet,
   updateSkill,
-  updateSectionTitle
+  updateSectionTitle,
+  saveToLocalStorage,
+  loadFromLocalStorage,
+  clearLocalStorage
 } from './resumeEditor';
+
+
 
 const ResumeEditor: React.FC = () => {
   const { currentResume, updateContent } = useResume();
@@ -45,6 +60,39 @@ const ResumeEditor: React.FC = () => {
 
   const sections = history.present;
 
+  // Load data from localStorage on initial render
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const { sections, name: savedName, contact: savedContact } = loadFromLocalStorage();
+      
+      if (sections) {
+        setHistory(prev => ({
+          ...prev,
+          present: sections
+        }));
+      }
+      
+      if (savedName) {
+        setName(savedName);
+      }
+      
+      if (savedContact) {
+        setContact(savedContact);
+      }
+    }
+  }, []);
+
+  // Save to localStorage whenever relevant state changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const timeoutId = setTimeout(() => {
+        saveToLocalStorage(sections, name, contact);
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [sections, name, contact]);
+
   const updateContact = (field: string, value: string) => {
     setContact(prev => ({ ...prev, [field]: value }));
   };
@@ -56,6 +104,34 @@ const ResumeEditor: React.FC = () => {
   const handleRedo = useCallback(() => {
     redo(setHistory);
   }, []);
+
+  const handleClearResume = () => {
+    if (window.confirm('Are you sure you want to clear all resume data? This action cannot be undone.')) {
+      setHistory(getInitialHistoryState());
+      setName('');
+      setContact({
+        phone: '',
+        email: '',
+        website: '',
+        linkedin: '',
+        github: ''
+      });
+      clearLocalStorage();
+    }
+  };
+
+  const handleImportPDF = () => {
+    // PDF import logic here
+    alert('PDF import functionality will be implemented here');
+  };
+
+  const handleModifySections = () => {
+    // Sections modification logic
+  };
+
+  const handleModifyHeader = () => {
+    // Header modification logic
+  };
 
   const handleDeleteSection = (sectionType: 'education' | 'experience' | 'projects' | 'skills', id: string) => {
     deleteSection(sections, sectionType, id, setHistory);
@@ -177,86 +253,157 @@ const ResumeEditor: React.FC = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleUndo, handleRedo]);
 
+  const { theme } = useTheme();
+  
   return (
-    <div className={`${styles.resumePage} min-h-[1140px] w-[1000px]`}>  
-      {/* Header Section */}
-      <ResumeHeader
-        name={name}
-        contact={contact}
-        setName={setName}
-        updateContact={updateContact}
-      />
+    
+    <div className="flex flex-col">
+      {/* Header Controls Bar */}
+      <div className={`w-full ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-b shadow-sm sticky top-0 z-10 py-3 px-4`}>
+  <div className="max-w-7xl mx-auto flex justify-between items-center">
+    <div className="flex items-center space-x-3">
+      <button 
+        onClick={handleModifyHeader}
+        className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-50'} border rounded-md px-3 py-1.5 transition-colors`}
+      >
+        <IconUser size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : ''}`}>Contact Header</span>
+        <IconChevronDown size={16} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+      </button>
+      
+      <button 
+        onClick={handleModifySections}
+        className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-50'} border rounded-md px-3 py-1.5 transition-colors`}
+      >
+        <IconLayoutList size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : ''}`}>Content Blocks</span>
+        <IconChevronDown size={16} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+      </button>
+    </div>
+    
+    <div className="flex items-center">
+      <div className="flex items-center mr-4">
+        <button 
+          onClick={handleUndo} 
+          disabled={history.past.length === 0}
+          className={`p-1.5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} rounded-l-md border disabled:opacity-40 transition-colors`}
+          title="Undo"
+        >
+          <IconArrowBackUp size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+        </button>
+        
+        <button 
+          onClick={handleRedo} 
+          disabled={history.future.length === 0}
+          className={`p-1.5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} rounded-r-md border border-l-0 disabled:opacity-40 transition-colors`}
+          title="Redo"
+        >
+          <IconArrowForwardUp size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+        </button>
+      </div>
+      
+      <button 
+        onClick={handleClearResume}
+        className={`p-1.5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'} rounded-md border mr-3 transition-colors`}
+        title="Clear Resume"
+      >
+        <IconTrash size={18} stroke={1.5} className="text-red-500" />
+      </button>
+      
+      <button 
+        onClick={handleImportPDF}
+        className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-900 hover:bg-gray-800'} text-white rounded-md px-4 py-1.5 transition-colors`}
+      >
+        <IconFileUpload size={18} stroke={1.5} />
+        <span className="text-sm font-medium">Import PDF</span>
+      </button>
+    </div>
+  </div>
+</div>
 
-      {/* Education Section */}
-      <EducationSection 
-        educations={sections.education.map(edu => ({
-          id: edu.id,
-          school: edu.school,
-          degree: edu.degree,
-          location: edu.location,
-          dates: edu.dates,
-          bullets: edu.bullets.map(bullet => bullet.text)
-        }))}
-        sectionTitle={sections.educationTitle}
-        updateSectionTitle={(value) => handleUpdateSectionTitle('educationTitle', value)}
-        updateEducation={handleUpdateEducation}
-        updateEducationBullet={handleUpdateEducationBullet}
-        deleteEducationBullet={deleteEducationBullet}
-        addEducationBullet={addEducationBullet}
-        onAddNew={() => handleAddSection('education')}
-        deleteSection={(id) => handleDeleteSection('education', id)}
-      />
+      {/* Main Resume Editor */}
+      <div className="max-w-7xl mx-auto p-4">
+        <div className={`${styles.resumePage} min-h-[1140px] w-[1000px] bg-white shadow-md mx-auto`}>
+          {/* Header Section */}
+          <ResumeHeader
+            name={name}
+            contact={contact}
+            setName={setName}
+            updateContact={updateContact}
+          />
 
-      {/* Experience Section */}
-      <ExperienceSection 
-        experiences={sections.experience.map(exp => ({
-          id: exp.id,
-          title: exp.title,
-          organization: exp.organization,
-          location: exp.location,
-          dates: exp.dates,
-          bullets: exp.bullets.map(bullet => bullet.text)
-        }))}
-        sectionTitle={sections.experienceTitle}
-        updateSectionTitle={(value) => handleUpdateSectionTitle('experienceTitle', value)}
-        updateExperience={handleUpdateExperience}
-        updateExperienceBullet={handleUpdateExperienceBullet}
-        deleteExperienceBullet={deleteExperienceBullet}
-        addExperienceBullet={addExperienceBullet}
-        onAddNew={() => handleAddSection('experience')}
-        deleteSection={(id) => handleDeleteSection('experience', id)}
-      />
+          {/* Education Section */}
+          <EducationSection 
+            educations={sections.education.map(edu => ({
+              id: edu.id,
+              school: edu.school,
+              degree: edu.degree,
+              location: edu.location,
+              dates: edu.dates,
+              bullets: edu.bullets.map(bullet => bullet.text)
+            }))}
+            sectionTitle={sections.educationTitle}
+            updateSectionTitle={(value) => handleUpdateSectionTitle('educationTitle', value)}
+            updateEducation={handleUpdateEducation}
+            updateEducationBullet={handleUpdateEducationBullet}
+            deleteEducationBullet={deleteEducationBullet}
+            addEducationBullet={addEducationBullet}
+            onAddNew={() => handleAddSection('education')}
+            deleteSection={(id) => handleDeleteSection('education', id)}
+          />
 
-      {/* Projects Section */}
-      <ProjectsSection 
-        projects={sections.projects.map(project => ({
-          id: project.id,
-          name: project.name,
-          tech: project.tech,
-          dates: project.dates,
-          bullets: project.bullets.map(bullet => bullet.text)
-        }))}
-        sectionTitle={sections.projectsTitle}
-        updateSectionTitle={(value) => handleUpdateSectionTitle('projectsTitle', value)}
-        updateProject={handleUpdateProject}
-        updateProjectBullet={handleUpdateProjectBullet}
-        deleteProjectBullet={deleteProjectBullet}
-        addProjectBullet={addProjectBullet}
-        onAddNew={() => handleAddSection('projects')}
-        deleteSection={(id) => handleDeleteSection('projects', id)}
-      />
+          {/* Experience Section */}
+          <ExperienceSection 
+            experiences={sections.experience.map(exp => ({
+              id: exp.id,
+              title: exp.title,
+              organization: exp.organization,
+              location: exp.location,
+              dates: exp.dates,
+              bullets: exp.bullets.map(bullet => bullet.text)
+            }))}
+            sectionTitle={sections.experienceTitle}
+            updateSectionTitle={(value) => handleUpdateSectionTitle('experienceTitle', value)}
+            updateExperience={handleUpdateExperience}
+            updateExperienceBullet={handleUpdateExperienceBullet}
+            deleteExperienceBullet={deleteExperienceBullet}
+            addExperienceBullet={addExperienceBullet}
+            onAddNew={() => handleAddSection('experience')}
+            deleteSection={(id) => handleDeleteSection('experience', id)}
+          />
 
-      {/* Additional Section */}
-      <AdditionalSection
-        sectionTitle={sections.additionalTitle}
-        updateSectionTitle={(value) => handleUpdateSectionTitle('additionalTitle', value)}
-        skills={sections.skills}
-        updateSkill={handleUpdateSkill}
-        addSkillCategory={handleAddSkillCategory}
-        deleteSection={(id) => handleDeleteSection('skills', id)}
-      />
+          {/* Projects Section */}
+          <ProjectsSection 
+            projects={sections.projects.map(project => ({
+              id: project.id,
+              name: project.name,
+              tech: project.tech,
+              dates: project.dates,
+              bullets: project.bullets.map(bullet => bullet.text)
+            }))}
+            sectionTitle={sections.projectsTitle}
+            updateSectionTitle={(value) => handleUpdateSectionTitle('projectsTitle', value)}
+            updateProject={handleUpdateProject}
+            updateProjectBullet={handleUpdateProjectBullet}
+            deleteProjectBullet={deleteProjectBullet}
+            addProjectBullet={addProjectBullet}
+            onAddNew={() => handleAddSection('projects')}
+            deleteSection={(id) => handleDeleteSection('projects', id)}
+          />
+
+          {/* Additional Section */}
+          <AdditionalSection
+            sectionTitle={sections.additionalTitle}
+            updateSectionTitle={(value) => handleUpdateSectionTitle('additionalTitle', value)}
+            skills={sections.skills}
+            updateSkill={handleUpdateSkill}
+            addSkillCategory={handleAddSkillCategory}
+            deleteSection={(id) => handleDeleteSection('skills', id)}
+          />
+        </div>
+      </div>
     </div>
   );
 };
 
-export default ResumeEditor; 
+export default ResumeEditor;
