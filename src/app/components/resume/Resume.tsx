@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import styles from '@/app/resume.module.css';
-import ResumeHeader from './ResumeHeader';
-import EducationSection from './EducationSection';
-import ExperienceSection from './ExperienceSection';
-import ProjectsSection from './ProjectsSection';
-import SkillsSection from './SkillsSection';
+import ResumeHeader from './components/ResumeHeader';
+import EducationSection from './components/EducationSection';
+import ExperienceSection from './components/ExperienceSection';
+import ProjectsSection from './components/ProjectsSection';
+import SkillsSection from './components/SkillsSection';
 
 // Interfaces for our data types
 interface Education {
