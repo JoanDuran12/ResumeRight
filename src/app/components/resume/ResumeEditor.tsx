@@ -2,12 +2,12 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import styles from '@/app/resume.module.css';
-import ProjectsSection from './components/ProjectsSection'; // Assuming this exists
-import ExperienceSection from './components/ExperienceSection'; // Assuming this exists
-import EducationSection from './components/EducationSection'; // Assuming this exists
-import ResumeHeader from './components/ResumeHeader'; // Assuming this exists
-import AdditionalSection from './components/AdditionalSection'; // Assuming this exists
-import { useTheme } from '@/app/contexts/ThemeContext'; // Assuming this exists
+import ProjectsSection from './components/ProjectsSection';
+import ExperienceSection from './components/ExperienceSection';
+import EducationSection from './components/EducationSection';
+import ResumeHeader from './components/ResumeHeader';
+import AdditionalSection from './components/AdditionalSection';
+import { useTheme } from '@/app/contexts/ThemeContext';
 import {
   IconUser,
   IconLayoutList,
@@ -53,11 +53,12 @@ import {
   clearLocalStorage,
   getHistoryStats,    // New function
   getRecentActions,   // New function
-} from './resumeEditor'; // Adjust path if necessary
+} from './resumeEditor';
+import { generateLatexResume } from './latexGenerator';
 
 const ResumeEditor: React.FC = () => {
   const [history, setHistory] = useState<HistoryState>(getInitialHistoryState());
-  const { theme } = useTheme(); // Assuming ThemeContext works independently
+  const { theme } = useTheme();
 
   // Get current state from history
   const currentState = history.currentState;
@@ -323,7 +324,7 @@ const ResumeEditor: React.FC = () => {
             </button>
 
             <button
-              // onClick={handleImportPDF}
+              onClick={() => {console.log(generateLatexResume(currentState))}}
               className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-900 hover:bg-gray-800'} text-white rounded-md px-4 py-1.5 transition-colors`}
             >
               <IconFileUpload size={18} stroke={1.5} />

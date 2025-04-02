@@ -1,14 +1,22 @@
-// Define all the interfaces
+/**
+ * Represents a bullet point in a resume section
+ */
 export interface Bullet {
   id: string;
   text: string;
 }
 
+/**
+ * Base interface for all resume sections
+ */
 export interface Section {
   id: string;
   bullets: Bullet[];
 }
 
+/**
+ * Education section with school details
+ */
 export interface EducationSection extends Section {
   school: string;
   degree: string;
@@ -16,6 +24,9 @@ export interface EducationSection extends Section {
   dates: string;
 }
 
+/**
+ * Work experience section with job details
+ */
 export interface ExperienceSection extends Section {
   title: string;
   organization: string;
@@ -23,18 +34,27 @@ export interface ExperienceSection extends Section {
   dates: string;
 }
 
+/**
+ * Project section with project details
+ */
 export interface ProjectSection extends Section {
   name: string;
   tech: string;
   dates: string;
 }
 
+/**
+ * Skill category with associated skills
+ */
 export interface Skill {
   id: string;
   category: string;
   skills: string;
 }
 
+/**
+ * Contains all resume sections
+ */
 export interface Sections {
   education: EducationSection[];
   experience: ExperienceSection[];
@@ -46,6 +66,9 @@ export interface Sections {
   projectsTitle: string;
 }
 
+/**
+ * Contact information for resume header
+ */
 export interface Contact {
   phone: string;
   email: string;
@@ -54,15 +77,18 @@ export interface Contact {
   github: string;
 }
 
-// Include name and contact in the state managed by history
+/**
+ * Main application state
+ */
 export interface AppState {
   sections: Sections;
   name: string;
   contact: Contact;
 }
 
-// ***** MODIFIED *****
-// Define event types for history tracking
+/**
+ * Types of actions for history tracking
+ */
 export enum HistoryActionType {
   ADD_SECTION = 'ADD_SECTION',
   DELETE_SECTION = 'DELETE_SECTION',
@@ -78,8 +104,9 @@ export enum HistoryActionType {
   BATCH_UPDATE = 'BATCH_UPDATE'
 }
 
-// ***** MODIFIED *****
-// Define history event interface
+/**
+ * Represents a single state change in history
+ */
 export interface HistoryEvent {
   type: HistoryActionType;
   beforeState: AppState;
@@ -88,16 +115,18 @@ export interface HistoryEvent {
   description: string;
 }
 
-// ***** MODIFIED *****
-// HistoryState now tracks events rather than just states
+/**
+ * Tracks the history of state changes
+ */
 export interface HistoryState {
   events: HistoryEvent[];
-  currentIndex: number; // Index pointing to the current state in the events array
-  currentState: AppState; // Current state for easy access
+  currentIndex: number;
+  currentState: AppState;
 }
 
-// ***** MODIFIED *****
-// Create a history event with before and after states
+/**
+ * Creates a history event with before and after states
+ */
 export const createHistoryEvent = (
   type: HistoryActionType,
   beforeState: AppState,
@@ -111,8 +140,9 @@ export const createHistoryEvent = (
   description
 });
 
-// ***** MODIFIED *****
-// History operations now work with events
+/**
+ * Adds an event to history
+ */
 export const updateHistory = (
   actionType: HistoryActionType,
   beforeState: AppState,
@@ -120,17 +150,13 @@ export const updateHistory = (
   description: string,
   setHistory: Function
 ) => {
-  // Prevent adding identical state to history
   if (JSON.stringify(beforeState) === JSON.stringify(newState)) {
     console.warn("Attempted to add identical state to history. Skipping.");
     return;
   }
 
   setHistory((prev: HistoryState) => {
-    // Create new event
     const newEvent = createHistoryEvent(actionType, beforeState, newState, description);
-    
-    // If we're in the middle of the history (user has undone), remove future events
     const newEvents = prev.events.slice(0, prev.currentIndex + 1);
     
     return {
@@ -141,10 +167,12 @@ export const updateHistory = (
   });
 };
 
-// ***** MODIFIED *****
+/**
+ * Reverts to previous state in history
+ */
 export const undo = (setHistory: Function) => {
   setHistory((prev: HistoryState) => {
-    if (prev.currentIndex <= 0) return prev; // Can't undo if at the beginning
+    if (prev.currentIndex <= 0) return prev;
     
     const newIndex = prev.currentIndex - 1;
     const previousEvent = prev.events[newIndex];
@@ -152,15 +180,17 @@ export const undo = (setHistory: Function) => {
     return {
       ...prev,
       currentIndex: newIndex,
-      currentState: previousEvent.beforeState // Go to the before state of the previous event
+      currentState: previousEvent.beforeState
     };
   });
 };
 
-// ***** MODIFIED *****
+/**
+ * Advances to next state in history
+ */
 export const redo = (setHistory: Function) => {
   setHistory((prev: HistoryState) => {
-    if (prev.currentIndex >= prev.events.length - 1) return prev; // Can't redo if at the end
+    if (prev.currentIndex >= prev.events.length - 1) return prev;
     
     const newIndex = prev.currentIndex + 1;
     const nextEvent = prev.events[newIndex];
@@ -168,16 +198,45 @@ export const redo = (setHistory: Function) => {
     return {
       ...prev,
       currentIndex: newIndex,
-      currentState: nextEvent.currentState // Go to the after state of the next event
+      currentState: nextEvent.currentState
     };
   });
 };
 
-// ***** MODIFIED *****
-// Section/Field operations now use the event-based history system
+/**
+ * Creates a debounce utility
+ */
+export const createDebouncer = () => {
+  const timers: Record<string, number> = {};
+  
+  return (
+    key: string, 
+    fn: Function, 
+    delay: number = 500
+  ) => {
+    if (timers[key]) {
+      clearTimeout(timers[key]);
+    }
+    
+    timers[key] = window.setTimeout(() => {
+      fn();
+      delete timers[key];
+    }, delay);
+  };
+};
+
+const debounce = createDebouncer();
+
+// Define section types
+type SectionType = 'education' | 'experience' | 'projects' | 'skills';
+type ContentSectionType = 'education' | 'experience' | 'projects';
+
+/**
+ * Removes a section from the resume
+ */
 export const deleteSection = (
   currentState: AppState,
-  sectionType: 'education' | 'experience' | 'projects' | 'skills',
+  sectionType: SectionType,
   id: string,
   setHistory: Function
 ) => {
@@ -199,9 +258,12 @@ export const deleteSection = (
   );
 };
 
+/**
+ * Removes a bullet point from a section
+ */
 export const deleteBullet = (
   currentState: AppState,
-  sectionType: 'education' | 'experience' | 'projects',
+  sectionType: ContentSectionType,
   sectionId: string,
   bulletId: string,
   setHistory: Function
@@ -232,9 +294,12 @@ export const deleteBullet = (
   );
 };
 
+/**
+ * Adds a new bullet point to a section
+ */
 export const addBullet = (
   currentState: AppState,
-  sectionType: 'education' | 'experience' | 'projects',
+  sectionType: ContentSectionType,
   sectionId: string,
   setHistory: Function
 ) => {
@@ -264,6 +329,9 @@ export const addBullet = (
   );
 };
 
+/**
+ * Adds a new skill category
+ */
 export const addSkillCategory = (currentState: AppState, setHistory: Function) => {
   const beforeState = { ...currentState };
   
@@ -283,9 +351,12 @@ export const addSkillCategory = (currentState: AppState, setHistory: Function) =
   );
 };
 
+/**
+ * Adds a new section to the resume
+ */
 export const addSection = (
   currentState: AppState,
-  sectionType: 'education' | 'experience' | 'projects',
+  sectionType: ContentSectionType,
   setHistory: Function
 ) => {
   const beforeState = { ...currentState };
@@ -344,35 +415,102 @@ export const addSection = (
   );
 };
 
-// ***** MODIFIED *****
-// We use a debounced update for text fields to avoid recording every keystroke
-// This implementation requires a debounce utility to be defined elsewhere
-// Let's create a simple one
-export const createDebouncer = () => {
-  const timers: Record<string, number> = {};
+/**
+ * Generic function to update a section field
+ */
+export const updateSectionField = (
+  currentState: AppState,
+  sectionType: ContentSectionType,
+  index: number,
+  field: string,
+  value: string,
+  setHistory: Function
+) => {
+  const debounceKey = `${sectionType}_${index}_${field}`;
+  const beforeState = { ...currentState };
   
-  return (
-    key: string, 
-    fn: Function, 
-    delay: number = 500
-  ) => {
-    // Clear previous timer
-    if (timers[key]) {
-      clearTimeout(timers[key]);
-    }
-    
-    // Set new timer
-    timers[key] = window.setTimeout(() => {
-      fn();
-      delete timers[key];
-    }, delay);
+  const newSections = {
+    ...currentState.sections,
+    [sectionType]: currentState.sections[sectionType].map((section, i) => {
+      if (i === index) {
+        return { ...section, [field]: value };
+      }
+      return section;
+    }),
   };
+  
+  const afterState = { ...currentState, sections: newSections };
+  
+  debounce(debounceKey, () => {
+    updateHistory(
+      HistoryActionType.UPDATE_SECTION,
+      beforeState,
+      afterState,
+      `Updated ${sectionType} ${field}`,
+      setHistory
+    );
+  });
+  
+  setHistory((prev: HistoryState) => ({
+    ...prev,
+    currentState: afterState
+  }));
 };
 
-// Initialize debouncer
-const debounce = createDebouncer();
+/**
+ * Generic function to update a bullet point
+ */
+export const updateSectionBullet = (
+  currentState: AppState,
+  sectionType: ContentSectionType,
+  sectionIndex: number,
+  bulletIndex: number,
+  value: string,
+  setHistory: Function
+) => {
+  const sectionArray = currentState.sections[sectionType];
+  const sectionId = sectionArray[sectionIndex]?.id;
+  const bulletId = sectionArray[sectionIndex]?.bullets[bulletIndex]?.id;
 
-// Field updates with debounce for text input
+  if (!sectionId || !bulletId) return;
+  
+  const debounceKey = `${sectionType}_bullet_${sectionId}_${bulletId}`;
+  const beforeState = { ...currentState };
+
+  const newSections = {
+    ...currentState.sections,
+    [sectionType]: currentState.sections[sectionType].map((section, i) => {
+      if (i === sectionIndex) {
+        return {
+          ...section,
+          bullets: section.bullets.map((b, j) => (j === bulletIndex ? { ...b, text: value } : b)),
+        };
+      }
+      return section;
+    }),
+  };
+  
+  const afterState = { ...currentState, sections: newSections };
+  
+  debounce(debounceKey, () => {
+    updateHistory(
+      HistoryActionType.UPDATE_BULLET,
+      beforeState,
+      afterState,
+      `Updated ${sectionType} bullet`,
+      setHistory
+    );
+  });
+  
+  setHistory((prev: HistoryState) => ({
+    ...prev,
+    currentState: afterState
+  }));
+};
+
+/**
+ * Updates an education section field
+ */
 export const updateEducation = (
   currentState: AppState,
   index: number,
@@ -380,46 +518,12 @@ export const updateEducation = (
   value: string,
   setHistory: Function
 ) => {
-  // Create a unique key for this field update
-  const debounceKey = `education_${index}_${field}`;
-  
-  // Get current (pre-update) state for history
-  const beforeState = { ...currentState };
-  
-  // Create updated state
-  const newSections = {
-    ...currentState.sections,
-    education: currentState.sections.education.map((edu, i) => {
-      if (i === index) {
-        return {
-          ...edu,
-          [field]: value,
-        };
-      }
-      return edu;
-    }),
-  };
-  
-  const afterState = { ...currentState, sections: newSections };
-  
-  // Debounce the history update to avoid recording every keystroke
-  debounce(debounceKey, () => {
-    updateHistory(
-      HistoryActionType.UPDATE_SECTION,
-      beforeState,
-      afterState,
-      `Updated education ${field}`,
-      setHistory
-    );
-  });
-  
-  // Still update the state immediately, but don't record in history yet
-  setHistory((prev: HistoryState) => ({
-    ...prev,
-    currentState: afterState
-  }));
+  updateSectionField(currentState, 'education', index, field, value, setHistory);
 };
 
+/**
+ * Updates an education bullet point
+ */
 export const updateEducationBullet = (
   currentState: AppState,
   eduIndex: number,
@@ -427,56 +531,12 @@ export const updateEducationBullet = (
   value: string,
   setHistory: Function
 ) => {
-  const eduId = currentState.sections.education[eduIndex]?.id;
-  const bulletId = currentState.sections.education[eduIndex]?.bullets[bulletIndex]?.id;
-
-  if (!eduId || !bulletId) return;
-  
-  // Create a unique key for this bullet update
-  const debounceKey = `education_bullet_${eduId}_${bulletId}`;
-  
-  // Get current (pre-update) state for history
-  const beforeState = { ...currentState };
-
-  const newSections = {
-    ...currentState.sections,
-    education: currentState.sections.education.map(section => {
-      if (section.id === eduId) {
-        return {
-          ...section,
-          bullets: section.bullets.map(b => {
-            if (b.id === bulletId) {
-              return { ...b, text: value };
-            }
-            return b;
-          })
-        };
-      }
-      return section;
-    })
-  };
-  
-  const afterState = { ...currentState, sections: newSections };
-  
-  // Debounce the history update to avoid recording every keystroke
-  debounce(debounceKey, () => {
-    updateHistory(
-      HistoryActionType.UPDATE_BULLET,
-      beforeState,
-      afterState,
-      'Updated education bullet',
-      setHistory
-    );
-  });
-  
-  // Still update the state immediately, but don't record in history yet
-  setHistory((prev: HistoryState) => ({
-    ...prev,
-    currentState: afterState
-  }));
+  updateSectionBullet(currentState, 'education', eduIndex, bulletIndex, value, setHistory);
 };
 
-// Similarly modify other update functions with debouncing
+/**
+ * Updates an experience section field
+ */
 export const updateExperience = (
   currentState: AppState,
   index: number,
@@ -484,37 +544,12 @@ export const updateExperience = (
   value: string,
   setHistory: Function
 ) => {
-  const debounceKey = `experience_${index}_${field}`;
-  const beforeState = { ...currentState };
-  
-  const newSections = {
-    ...currentState.sections,
-    experience: currentState.sections.experience.map((exp, i) => {
-      if (i === index) {
-        return { ...exp, [field]: value };
-      }
-      return exp;
-    }),
-  };
-  
-  const afterState = { ...currentState, sections: newSections };
-  
-  debounce(debounceKey, () => {
-    updateHistory(
-      HistoryActionType.UPDATE_SECTION,
-      beforeState,
-      afterState,
-      `Updated experience ${field}`,
-      setHistory
-    );
-  });
-  
-  setHistory((prev: HistoryState) => ({
-    ...prev,
-    currentState: afterState
-  }));
+  updateSectionField(currentState, 'experience', index, field, value, setHistory);
 };
 
+/**
+ * Updates an experience bullet point
+ */
 export const updateExperienceBullet = (
   currentState: AppState,
   expIndex: number,
@@ -522,45 +557,12 @@ export const updateExperienceBullet = (
   value: string,
   setHistory: Function
 ) => {
-  const expId = currentState.sections.experience[expIndex]?.id;
-  const bulletId = currentState.sections.experience[expIndex]?.bullets[bulletIndex]?.id;
-
-  if (!expId || !bulletId) return;
-  
-  const debounceKey = `experience_bullet_${expId}_${bulletId}`;
-  const beforeState = { ...currentState };
-
-  const newSections = {
-    ...currentState.sections,
-    experience: currentState.sections.experience.map(section => {
-      if (section.id === expId) {
-        return {
-          ...section,
-          bullets: section.bullets.map(b => (b.id === bulletId ? { ...b, text: value } : b)),
-        };
-      }
-      return section;
-    }),
-  };
-  
-  const afterState = { ...currentState, sections: newSections };
-  
-  debounce(debounceKey, () => {
-    updateHistory(
-      HistoryActionType.UPDATE_BULLET,
-      beforeState,
-      afterState,
-      'Updated experience bullet',
-      setHistory
-    );
-  });
-  
-  setHistory((prev: HistoryState) => ({
-    ...prev,
-    currentState: afterState
-  }));
+  updateSectionBullet(currentState, 'experience', expIndex, bulletIndex, value, setHistory);
 };
 
+/**
+ * Updates a project section field
+ */
 export const updateProject = (
   currentState: AppState,
   index: number,
@@ -568,37 +570,12 @@ export const updateProject = (
   value: string,
   setHistory: Function
 ) => {
-  const debounceKey = `project_${index}_${field}`;
-  const beforeState = { ...currentState };
-  
-  const newSections = {
-    ...currentState.sections,
-    projects: currentState.sections.projects.map((proj, i) => {
-      if (i === index) {
-        return { ...proj, [field]: value };
-      }
-      return proj;
-    }),
-  };
-  
-  const afterState = { ...currentState, sections: newSections };
-  
-  debounce(debounceKey, () => {
-    updateHistory(
-      HistoryActionType.UPDATE_SECTION,
-      beforeState,
-      afterState,
-      `Updated project ${field}`,
-      setHistory
-    );
-  });
-  
-  setHistory((prev: HistoryState) => ({
-    ...prev,
-    currentState: afterState
-  }));
+  updateSectionField(currentState, 'projects', index, field, value, setHistory);
 };
 
+/**
+ * Updates a project bullet point
+ */
 export const updateProjectBullet = (
   currentState: AppState,
   projIndex: number,
@@ -606,45 +583,12 @@ export const updateProjectBullet = (
   value: string,
   setHistory: Function
 ) => {
-  const projId = currentState.sections.projects[projIndex]?.id;
-  const bulletId = currentState.sections.projects[projIndex]?.bullets[bulletIndex]?.id;
-
-  if (!projId || !bulletId) return;
-  
-  const debounceKey = `project_bullet_${projId}_${bulletId}`;
-  const beforeState = { ...currentState };
-
-  const newSections = {
-    ...currentState.sections,
-    projects: currentState.sections.projects.map(section => {
-      if (section.id === projId) {
-        return {
-          ...section,
-          bullets: section.bullets.map(b => (b.id === bulletId ? { ...b, text: value } : b)),
-        };
-      }
-      return section;
-    }),
-  };
-  
-  const afterState = { ...currentState, sections: newSections };
-  
-  debounce(debounceKey, () => {
-    updateHistory(
-      HistoryActionType.UPDATE_BULLET,
-      beforeState,
-      afterState,
-      'Updated project bullet',
-      setHistory
-    );
-  });
-  
-  setHistory((prev: HistoryState) => ({
-    ...prev,
-    currentState: afterState
-  }));
+  updateSectionBullet(currentState, 'projects', projIndex, bulletIndex, value, setHistory);
 };
 
+/**
+ * Updates a skill field
+ */
 export const updateSkill = (
   currentState: AppState,
   index: number,
@@ -683,6 +627,9 @@ export const updateSkill = (
   }));
 };
 
+/**
+ * Updates a section title
+ */
 export const updateSectionTitle = (
   currentState: AppState,
   sectionType: 'additionalTitle' | 'educationTitle' | 'experienceTitle' | 'projectsTitle',
@@ -715,6 +662,9 @@ export const updateSectionTitle = (
   }));
 };
 
+/**
+ * Updates the name field
+ */
 export const updateName = (
   currentState: AppState,
   newName: string,
@@ -742,6 +692,9 @@ export const updateName = (
   }));
 };
 
+/**
+ * Updates a contact field
+ */
 export const updateContactField = (
   currentState: AppState,
   field: keyof Contact,
@@ -772,8 +725,9 @@ export const updateContactField = (
   }));
 };
 
-// ***** MODIFIED *****
-// Initial state now returns HistoryState with events array
+/**
+ * Creates initial history state with default sections
+ */
 export const getInitialHistoryState = (): HistoryState => {
   const initialState: AppState = {
     sections: {
@@ -816,10 +770,9 @@ export const getInitialHistoryState = (): HistoryState => {
     }
   };
 
-  // Create initial event
   const initialEvent: HistoryEvent = {
     type: HistoryActionType.BATCH_UPDATE,
-    beforeState: initialState, // Same as currentState for first event
+    beforeState: initialState,
     currentState: initialState,
     timestamp: Date.now(),
     description: 'Initial state'
@@ -832,8 +785,9 @@ export const getInitialHistoryState = (): HistoryState => {
   };
 };
 
-// ***** MODIFIED *****
-// Save the current AppState
+/**
+ * Saves current state to localStorage
+ */
 export const saveToLocalStorage = (historyState: HistoryState) => {
   try {
     const dataToSave = {
@@ -846,14 +800,14 @@ export const saveToLocalStorage = (historyState: HistoryState) => {
   }
 };
 
-// ***** MODIFIED *****
-// Load state from localStorage, returning a complete AppState or null
+/**
+ * Loads state from localStorage
+ */
 export const loadFromLocalStorage = (): AppState | null => {
   try {
     const savedData = localStorage.getItem('resumeEditorData');
     if (savedData) {
       const parsed = JSON.parse(savedData);
-      // Basic validation: Check if essential parts exist
       if (parsed.currentState && 
           parsed.currentState.sections && 
           parsed.currentState.name !== undefined && 
@@ -865,11 +819,12 @@ export const loadFromLocalStorage = (): AppState | null => {
     console.error('Error loading from localStorage:', err);
   }
 
-  // Return null if nothing valid in localStorage or error
   return null;
 };
 
-// Clear localStorage data (remains the same)
+/**
+ * Clears saved state from localStorage
+ */
 export const clearLocalStorage = () => {
   try {
     localStorage.removeItem('resumeEditorData');
@@ -879,8 +834,9 @@ export const clearLocalStorage = () => {
   }
 };
 
-// ***** ADDED *****
-// Get history stats
+/**
+ * Returns statistics about history state
+ */
 export const getHistoryStats = (historyState: HistoryState) => {
   return {
     totalEvents: historyState.events.length,
@@ -891,10 +847,10 @@ export const getHistoryStats = (historyState: HistoryState) => {
   };
 };
 
-// ***** ADDED *****
-// Helper to get action descriptions for UI
+/**
+ * Returns recent history actions for UI display
+ */
 export const getRecentActions = (historyState: HistoryState, count: number = 5) => {
-  // Get up to 'count' most recent actions before the current position
   const startIdx = Math.max(0, historyState.currentIndex - count);
   const endIdx = historyState.currentIndex;
   
@@ -905,5 +861,5 @@ export const getRecentActions = (historyState: HistoryState, count: number = 5) 
       timestamp: new Date(event.timestamp).toLocaleTimeString(),
       isCurrent: historyState.events.indexOf(event) === historyState.currentIndex
     }))
-    .reverse(); // Most recent first
+    .reverse();
 };
