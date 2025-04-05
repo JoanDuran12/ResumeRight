@@ -16,15 +16,14 @@ import {
   IconArrowForwardUp,
   IconTrash,
   IconFileUpload,
+  IconDownload, // Added download icon
 } from '@tabler/icons-react';
 import {
   // Interfaces
   Contact,
   AppState,
   HistoryState,
-  HistoryEvent,
   HistoryActionType,
-  Sections,
   EducationSection as EducationSectionType,
   ExperienceSection as ExperienceSectionType,
   ProjectSection as ProjectSectionType,
@@ -54,11 +53,16 @@ import {
   getHistoryStats,    // New function
   getRecentActions,   // New function
 } from './resumeEditor';
-import { generateLatexResume } from './latexGenerator';
 
 const ResumeEditor: React.FC = () => {
-  const [history, setHistory] = useState<HistoryState>(getInitialHistoryState());
   const { theme } = useTheme();
+  const [state, setState] = useState<AppState>(() => {
+    const savedState = loadFromLocalStorage();
+    return savedState || getInitialHistoryState().currentState;
+  });
+  const [history, setHistory] = useState<HistoryState>(() => getInitialHistoryState());
+  const [historyStats, setHistoryStats] = useState(() => getHistoryStats(history));
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   // Get current state from history
   const currentState = history.currentState;
@@ -100,8 +104,12 @@ const ResumeEditor: React.FC = () => {
     }
   }, [history]);
 
+  // Update history stats whenever history changes
+  useEffect(() => {
+    setHistoryStats(getHistoryStats(history));
+  }, [history]);
+
   // History stats for UI or debugging
-  const historyStats = getHistoryStats(history);
   const recentActions = getRecentActions(history, 5);
 
   // --- Handlers ---
@@ -125,6 +133,88 @@ const ResumeEditor: React.FC = () => {
     if (window.confirm('Are you sure you want to clear all resume data? This action cannot be undone.')) {
       setHistory(getInitialHistoryState()); // Reset to initial history state
       clearLocalStorage(); // Clear storage as well
+    }
+  };
+
+  // New download handler moved inside the component
+  const handleDownloadPDF = async () => {
+    if (!currentState) {
+      console.error("Resume data is not available");
+      alert("Resume data is not available.");
+      return;
+    }
+
+    try {
+      setIsGeneratingPDF(true);
+      console.log("Sending data to generate PDF:", currentState);
+
+      // Make API call to generate PDF
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(currentState),
+      });
+
+      console.log("Response status:", response.status);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+
+      // Check if the response is an error
+      if (!response.ok) {
+        let errorMessage = "Failed to generate PDF";
+
+        // Try to parse the error response
+        try {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+            console.error("Error details:", errorData);
+          } else {
+            const errorText = await response.text();
+            console.error("Error response (not JSON):", errorText);
+            errorMessage = `Server error: ${response.status} ${response.statusText}. ${errorText.substring(0, 100)}`;
+          }
+        } catch (parseError) {
+          console.error("Error parsing error response:", parseError);
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      // Verify we got a PDF
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/pdf")) {
+        console.error("Expected a PDF but got:", contentType);
+        // Attempt to read response as text for more clues
+        const responseText = await response.text();
+        console.error("Response body (non-PDF):", responseText.substring(0, 500)); // Log first 500 chars
+        throw new Error(`Invalid response format. Expected PDF, but got ${contentType}.`);
+      }
+
+      // Get the PDF blob from the response
+      const pdfBlob = await response.blob();
+      console.log("PDF blob received, size:", pdfBlob.size);
+
+      // Create a download link and trigger the download
+      const downloadUrl = URL.createObjectURL(pdfBlob);
+      const downloadLink = document.createElement('a');
+      downloadLink.href = downloadUrl;
+      const safeName = currentState.name?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'resume';
+      downloadLink.download = `${safeName}_resume.pdf`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+
+      // Clean up the URL object
+      URL.revokeObjectURL(downloadUrl);
+      console.log("Download completed");
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert('Error generating PDF: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -248,26 +338,6 @@ const ResumeEditor: React.FC = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleUndo, handleRedo]);
 
-  // Optional: Display history status for debugging
-  const renderHistoryDebug = () => (
-    <div className="text-xs bg-gray-100 p-2 rounded mt-4">
-      <div>History Events: {historyStats.totalEvents}</div>
-      <div>Current Position: {historyStats.currentPosition}</div>
-      <div>Can Undo: {historyStats.canUndo ? 'Yes' : 'No'}</div>
-      <div>Can Redo: {historyStats.canRedo ? 'Yes' : 'No'}</div>
-      <div>Last Action: {historyStats.lastEvent}</div>
-      
-      <div className="mt-2">Recent Actions:</div>
-      <ul className="list-disc pl-4">
-        {recentActions.map((action, i) => (
-          <li key={i} className={action.isCurrent ? 'font-bold' : ''}>
-            {action.timestamp}: {action.description}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-
   // --- JSX ---
   return (
     <div className="flex flex-col">
@@ -323,8 +393,31 @@ const ResumeEditor: React.FC = () => {
               <IconTrash size={18} stroke={1.5} className="text-red-500" />
             </button>
 
+            {/* Download PDF Button */}
             <button
-              onClick={() => {console.log(generateLatexResume(currentState))}}
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPDF}
+              className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-md px-4 py-1.5 mr-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+              title="Download PDF"
+            >
+              {isGeneratingPDF ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <IconDownload size={18} stroke={1.5} />
+                  <span className="text-sm font-medium">Download PDF</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={() => {}}
               className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-900 hover:bg-gray-800'} text-white rounded-md px-4 py-1.5 transition-colors`}
             >
               <IconFileUpload size={18} stroke={1.5} />
@@ -410,9 +503,6 @@ const ResumeEditor: React.FC = () => {
             deleteSection={(id) => handleDeleteSection('skills', id)}
           />
         </div>
-        
-        {/* Uncomment for debugging */}
-        {/* {renderHistoryDebug()} */}
       </div>
     </div>
   );

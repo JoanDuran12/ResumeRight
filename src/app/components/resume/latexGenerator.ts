@@ -22,12 +22,8 @@ export const generateLatexResume = (state: AppState): string => {
     let latex = `\\documentclass[letterpaper,11pt]{article}
 
 \\usepackage{latexsym}
-\\usepackage[empty]{fullpage}
-\\usepackage{titlesec}
-\\usepackage{marvosym}
 \\usepackage[usenames,dvipsnames]{color}
 \\usepackage{verbatim}
-\\usepackage{enumitem}
 \\usepackage[hidelinks]{hyperref}
 \\usepackage{fancyhdr}
 \\usepackage[english]{babel}
@@ -52,11 +48,6 @@ export const generateLatexResume = (state: AppState): string => {
 \\raggedbottom
 \\raggedright
 \\setlength{\\tabcolsep}{0in}
-
-% Sections formatting
-\\titleformat{\\section}{
-  \\vspace{-4pt}\\scshape\\raggedright\\large
-}{}{0em}{}[\\color{black}\\titlerule \\vspace{-5pt}]
 
 % Ensure that generate pdf is machine readable/ATS parsable
 \\pdfgentounicode=1
@@ -106,11 +97,22 @@ export const generateLatexResume = (state: AppState): string => {
     }
     
     if (contact.linkedin) {
-      latex += ` $|$ \\href{${escapeLaTeX(contact.linkedin)}}{\\underline{${escapeLaTeX(contact.linkedin.replace(/^https?:\/\//, ''))}}}`;
+      const linkedinUrl = contact.linkedin.includes('linkedin.com/in/') 
+        ? contact.linkedin 
+        : `https://linkedin.com/in/${contact.linkedin}`;
+      const displayText = linkedinUrl.replace(/^https?:\/\//, '');
+      
+      latex += ` $|$ \\href{${escapeLaTeX(linkedinUrl)}}{\\underline{${escapeLaTeX(displayText)}}}`;
     }
     
+    // For GitHub - prepend "github.com/" if it doesn't already include it
     if (contact.github) {
-      latex += ` $|$ \\href{${escapeLaTeX(contact.github)}}{\\underline{${escapeLaTeX(contact.github.replace(/^https?:\/\//, ''))}}}`;
+      const githubUrl = contact.github.includes('github.com/') 
+        ? contact.github 
+        : `https://github.com/${contact.github}`;
+      const displayText = githubUrl.replace(/^https?:\/\//, '');
+      
+      latex += ` $|$ \\href{${escapeLaTeX(githubUrl)}}{\\underline{${escapeLaTeX(displayText)}}}`;
     }
     
     latex += `

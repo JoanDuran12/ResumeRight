@@ -24,11 +24,12 @@ const navItems = [
   },
 ];
 
-function Header({ onDownloadPDF, onSaveResume }) {
+
+function Header() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   
   // Check if we're on the editor page
@@ -71,24 +72,7 @@ function Header({ onDownloadPDF, onSaveResume }) {
               <span className="font-bold text-xl">ResumeRight</span>
             </Link>
           </div>
-          
-          {/* Navigation - Only shown if not on editor page */}
-          {!isEditorPage && (
-            <nav className="hidden md:flex">
-              <div className="flex items-center space-x-1">
-                {navItems.map((item) => (
-                  <a 
-                    key={item.title}
-                    className="px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    href={item.href}
-                    target={item.target}
-                  >
-                    {item.title}
-                  </a>
-                ))}
-              </div>
-            </nav>
-          )}
+        
           
           {/* Right Side - User Controls */}
           <div className="flex items-center gap-3">
@@ -112,32 +96,6 @@ function Header({ onDownloadPDF, onSaveResume }) {
                     Dashboard
                   </div>
                 </Link>
-                
-                {/* Editor page buttons - only shown on editor page */}
-                {isEditorPage && (
-                  <>
-                    {/* Save button */}
-                    <button 
-                      onClick={onSaveResume}
-                      className="border border-gray-200 dark:border-gray-700 bg-white hover:bg-gray-50 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
-                      title="Save resume"
-                    >
-                      <IconDeviceFloppy size={18} />
-                      <span>Save</span>
-                    </button>
-                    
-                    {/* Download PDF button */}
-                    <button 
-                      onClick={onDownloadPDF}
-                      className="border border-gray-200 dark:border-gray-700 bg-white hover:bg-gray-50 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
-                      title="Download as PDF"
-                    >
-                      <IconDownload size={18} />
-                      <span>Download</span>
-                    </button>
-                  </>
-                )}
-                
                 <div className="relative" ref={dropdownRef}>
                   <button 
                     onClick={() => setDropdownOpen(!dropdownOpen)}
