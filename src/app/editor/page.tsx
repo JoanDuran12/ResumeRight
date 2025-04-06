@@ -1,13 +1,13 @@
 "use client";
 
-import EditorHeader from "../components/resume/editorHeader";
-import ResumeEditor from "../components/resume/ResumeEditor";
+import Header from "../components/Header";
+import ResumeEditor from "@/app/components/resume/ResumeEditor";
 import JobDescription from "../components/resume/JobDescription";
 
 export default function EditorPage() {
   return (
     <>
-      <EditorHeader />
+      <Header />
       <div>
         <JobDescription />
       </div>
