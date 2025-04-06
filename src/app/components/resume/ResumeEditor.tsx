@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
 import styles from '@/app/resume.module.css';
@@ -323,7 +323,7 @@ const ResumeEditor: React.FC = () => {
   // Keyboard shortcut listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
         if (e.shiftKey) {
           e.preventDefault();
           handleRedo();
