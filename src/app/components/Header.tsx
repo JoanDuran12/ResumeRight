@@ -54,7 +54,7 @@ function Header() {
   };
   
   return (
-    <div className="w-full bg-background pt-4 px-4 sticky top-0 z-50">
+    <div className="w-full pt-4 px-4 sticky top-0 z-50">
       <header className="max-w-7xl mx-auto bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 border border-gray-200 dark:border-gray-800 rounded-lg px-6 py-3">
         <div className="flex items-center justify-between">
           {/* Logo & Brand */}

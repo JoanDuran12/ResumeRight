@@ -70,7 +70,7 @@ const Dashboard: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen bg-[var(--background)]">
+    <div className="max-h-screen bg-[var(--background)]">
       <input
         type="file"
         ref={fileInputRef}
