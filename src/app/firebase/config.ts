@@ -5,7 +5,6 @@ import {
   getAuth, 
   GoogleAuthProvider, 
   signInWithPopup, 
-  signInWithRedirect,
   getRedirectResult,
   deleteUser
 } from 'firebase/auth';

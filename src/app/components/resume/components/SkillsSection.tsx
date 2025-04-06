@@ -26,6 +26,7 @@ const SkillsSection: React.FC<SkillsSectionProps> = ({ skills, updateSkills }) =
           onChange={(value) => updateSkills('languages', value)} 
           className={styles.resumeSkillsList}
           inline={true}
+          placeholder="JavaScript, Python, Java, etc."
         />
       </div>
       <div className={styles.resumeSkills} style={{alignItems: 'center'}}>
@@ -35,6 +36,7 @@ const SkillsSection: React.FC<SkillsSectionProps> = ({ skills, updateSkills }) =
           onChange={(value) => updateSkills('frameworks', value)} 
           className={styles.resumeSkillsList}
           inline={true}
+          placeholder="React, Angular, Express, etc."
         />
       </div>
       <div className={styles.resumeSkills} style={{ alignItems: 'center'}}>
@@ -44,6 +46,7 @@ const SkillsSection: React.FC<SkillsSectionProps> = ({ skills, updateSkills }) =
           onChange={(value) => updateSkills('tools', value)} 
           className={styles.resumeSkillsList}
           inline={true}
+          placeholder="Git, Docker, AWS, etc."
         />
       </div>
       <div className={styles.resumeSkills} style={{ alignItems: 'center'}}>
@@ -53,6 +56,7 @@ const SkillsSection: React.FC<SkillsSectionProps> = ({ skills, updateSkills }) =
           onChange={(value) => updateSkills('libraries', value)} 
           className={styles.resumeSkillsList}
           inline={true}
+          placeholder="Redux, jQuery, etc."
         />
       </div>
     </section>
