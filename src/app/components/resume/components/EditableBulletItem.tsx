@@ -1,4 +1,4 @@
-import React, { useState, useRef, KeyboardEvent, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from '@/app/resume.module.css';
 import EditableText from '@/app/components/resume/components/EditableText';
 
@@ -13,16 +13,16 @@ const EditableBulletItem: React.FC<EditableBulletItemProps> = ({
   value,
   onChange,
   onDelete,
-  placeholder = 'Write an accomplishment'
+  placeholder = 'Write an accomplishment',
 }) => {
   const [isHovering, setIsHovering] = useState(false);
   const [isLongContent, setIsLongContent] = useState(false);
-  
+
   // Check if content is long enough to warrant multiline
   useEffect(() => {
     setIsLongContent(value.length > 150); // Increased threshold to match 720px width
   }, [value]);
-  
+
   // Function to handle input and prevent line breaks
   const handleChange = (newValue: string) => {
     // Only replace newlines if not in long content mode
@@ -34,46 +34,63 @@ const EditableBulletItem: React.FC<EditableBulletItemProps> = ({
       onChange(newValue);
     }
   };
-  
+
   return (
     <li
-      style={{
-        display: 'flex',
-        flexDirection: 'column'
-      }}
       className={styles.resumeBulletItem}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%', // Ensure the bullet item takes the full width
+      }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-        <div className={styles.bulletContainer} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <span
-            className={`${styles.bulletPoint} ${isHovering ? styles.deleteBullet : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            style={{ lineHeight: 'normal', display: 'flex', alignItems: 'center' }}
-          >
-            {isHovering ? '×' : '•'}
-          </span>
-        </div>
-        <div className={styles.bulletContent} style={{ 
-          flex: 1, 
-          display: 'flex', 
+      {/* Bullet Point */}
+      <div
+        className={styles.bulletContainer}
+        style={{
+          display: 'flex',
           alignItems: 'center',
-          maxWidth: 'calc(100% - 30px)', // Leave space for bullet
-          width: '100%'  
-        }}>
-          <EditableText
-            value={value}
-            onChange={handleChange}
-            placeholder={placeholder}
-            multiline={false}
-            inline={true}
-            className={styles.bulletContent}
-          />
-        </div>
+          flexShrink: 0,
+        }}
+      >
+        <span
+          className={`${styles.bulletPoint} ${
+            isHovering ? styles.deleteBullet : ''
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          style={{
+            lineHeight: 'normal',
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          {isHovering ? '×' : '•'}
+        </span>
+      </div>
+
+      {/* Editable Text */}
+      <div
+        className={styles.bulletContent}
+        style={{
+          flex: 1, // Allow this section to take up the remaining space
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+        }}
+      >
+        <EditableText
+          value={value}
+          onChange={handleChange}
+          placeholder={placeholder}
+          multiline={false}
+          inline={true}
+          className={styles.bulletContent}
+        />
       </div>
     </li>
   );

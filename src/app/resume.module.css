@@ -2,32 +2,38 @@
 
 /* --- Font Definitions --- */
 @font-face {
-  font-family: 'Latin Modern Roman';
-  src: url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/regular/lmroman10-regular.woff2') format('woff2'),
-       url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/regular/lmroman10-regular.woff') format('woff');
+  font-family: "Latin Modern Roman";
+  src: url("https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/regular/lmroman10-regular.woff2")
+      format("woff2"),
+    url("https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/regular/lmroman10-regular.woff")
+      format("woff");
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Latin Modern Roman';
-  src: url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/semibold/lmroman12-bold.woff2') format('woff2'),
-       url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/semibold/lmroman12-bold.woff') format('woff');
+  font-family: "Latin Modern Roman";
+  src: url("https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/semibold/lmroman12-bold.woff2")
+      format("woff2"),
+    url("https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/semibold/lmroman12-bold.woff")
+      format("woff");
   font-weight: 600; /* Semibold */
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Latin Modern Roman';
-  src: url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/italic/lmroman10-italic.woff2') format('woff2'),
-       url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/italic/lmroman10-italic.woff') format('woff');
+  font-family: "Latin Modern Roman";
+  src: url("https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/italic/lmroman10-italic.woff2")
+      format("woff2"),
+    url("https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts/Latin-Modern-Roman/italic/lmroman10-italic.woff")
+      format("woff");
   font-weight: normal;
   font-style: italic;
 }
 
 /* --- Base Page Layout --- */
 .resumePage {
-  font-family: 'Latin Modern Roman', serif;
+  font-family: "Latin Modern Roman", serif;
   font-size: 11pt;
   color: #000000;
   background-color: #ffffff;
@@ -45,7 +51,7 @@
 }
 
 .resumeName {
-  font-family: 'Latin Modern Roman', serif;
+  font-family: "Latin Modern Roman", serif;
   font-size: 24pt;
   font-weight: 600;
   text-transform: none;
@@ -122,7 +128,7 @@
 }
 
 .resumeSectionTitle {
-  font-family: 'Latin Modern Roman', serif;
+  font-family: "Latin Modern Roman", serif;
   font-size: 14pt;
   font-weight: normal;
   text-transform: none;
@@ -257,7 +263,7 @@
   content: attr(data-placeholder);
   position: absolute; /* Position relative to the parent span */
   left: 2px; /* Align with padding */
-  top: 2px;  /* Align with padding */
+  top: 2px; /* Align with padding */
   right: 2px; /* Allow text wrapping within placeholder */
   color: #999;
   cursor: text;
@@ -470,7 +476,7 @@
   }
 
   .bulletContainer::before {
-    content: '•';
+    content: "•";
     font-size: 1.2em;
     display: inline-block;
     line-height: 1;
@@ -484,7 +490,7 @@
   }
 
   /* Hide CSS placeholders during print */
- :is(.editableContent, .bulletContent)[contenteditable]:empty::before {
+  :is(.editableContent, .bulletContent)[contenteditable]:empty::before {
     content: "" !important; /* Ensure it's hidden */
     display: none !important;
   }

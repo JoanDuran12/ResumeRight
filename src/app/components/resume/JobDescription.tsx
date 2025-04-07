@@ -1,14 +1,12 @@
 import {
-  IconCircleArrowLeft,
-  IconCircleArrowRight,
   IconCircleArrowLeftFilled,
   IconCircleArrowRightFilled,
 } from "@tabler/icons-react";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function JobDescription() {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [jobDescription, setJobDescription] = useState("");
 
   const toggleExpand = () => {
@@ -20,6 +18,19 @@ function JobDescription() {
   ) => {
     setJobDescription(e.target.value);
   };
+
+  // Load job description from localStorage on component mount
+  useEffect(() => {
+    const savedJobDescription = localStorage.getItem("jobDescription");
+    if (savedJobDescription) {
+      setJobDescription(savedJobDescription);
+    }
+  }, []);
+
+  // Save job description to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("jobDescription", jobDescription);
+  }, [jobDescription]);
 
   return (
     <div
