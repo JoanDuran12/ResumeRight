@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 
 // Initialize the Gemini API client
 const ai = new GoogleGenAI({
-  apiKey: "AIzaSyB2BvuBp5Q1nitei_uYYwgEU6Bo5DnO9UE",
+  apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
 });
 
 const model = "gemini-1.5-flash"; // Default model for Gemini API
