@@ -1,6 +1,45 @@
 import { AppState } from "./resumeEditor";
 
-export const generateLatexResume = (state: AppState): string => {
+// Add interface for visibility options
+export interface VisibilityOptions {
+  contactFields: {
+    phone: boolean;
+    email: boolean;
+    website: boolean;
+    linkedin: boolean;
+    github: boolean;
+  };
+  sectionVisibility: {
+    contact: boolean;
+    education: boolean;
+    experience: boolean;
+    projects: boolean;
+    additional: boolean;
+  };
+}
+
+// Default visibility options (all visible)
+const defaultVisibilityOptions: VisibilityOptions = {
+  contactFields: {
+    phone: true,
+    email: true,
+    website: true,
+    linkedin: true,
+    github: true,
+  },
+  sectionVisibility: {
+    contact: true,
+    education: true,
+    experience: true,
+    projects: true,
+    additional: true,
+  }
+};
+
+export const generateLatexResume = (
+  state: AppState, 
+  visibilityOptions: VisibilityOptions = defaultVisibilityOptions
+): string => {
     const { sections, name, contact } = state;
     
     // Escape special LaTeX characters
@@ -22,8 +61,12 @@ export const generateLatexResume = (state: AppState): string => {
     let latex = `\\documentclass[letterpaper,11pt]{article}
 
 \\usepackage{latexsym}
+\\usepackage[empty]{fullpage}
+\\usepackage{titlesec}
+\\usepackage{marvosym}
 \\usepackage[usenames,dvipsnames]{color}
 \\usepackage{verbatim}
+\\usepackage{enumitem}
 \\usepackage[hidelinks]{hyperref}
 \\usepackage{fancyhdr}
 \\usepackage[english]{babel}
@@ -48,6 +91,11 @@ export const generateLatexResume = (state: AppState): string => {
 \\raggedbottom
 \\raggedright
 \\setlength{\\tabcolsep}{0in}
+
+% Sections formatting
+\\titleformat{\\section}{
+  \\vspace{-4pt}\\scshape\\raggedright\\large
+}{}{0em}{}[\\color{black}\\titlerule \\vspace{-5pt}]
 
 % Ensure that generate pdf is machine readable/ATS parsable
 \\pdfgentounicode=1
@@ -88,31 +136,52 @@ export const generateLatexResume = (state: AppState): string => {
     // Add Header Section
     latex += `%----------HEADING----------
 \\begin{center}
-    \\textbf{\\Huge \\scshape ${escapeLaTeX(name || 'Your Name')}} \\\\ \\vspace{1pt}
-    \\small ${escapeLaTeX(contact.phone || 'Phone')} $|$ \\href{mailto:${escapeLaTeX(contact.email || 'email@example.com')}}{\\underline{${escapeLaTeX(contact.email || 'email@example.com')}}}`;
-    
-    // Add optional contact links
-    if (contact.website) {
-      latex += ` $|$ \\href{${escapeLaTeX(contact.website)}}{\\underline{${escapeLaTeX(contact.website.replace(/^https?:\/\//, ''))}}}`;
-    }
-    
-    if (contact.linkedin) {
-      const linkedinUrl = contact.linkedin.includes('linkedin.com/in/') 
-        ? contact.linkedin 
-        : `https://linkedin.com/in/${contact.linkedin}`;
-      const displayText = linkedinUrl.replace(/^https?:\/\//, '');
+    \\textbf{\\Huge \\scshape ${escapeLaTeX(name || 'Your Name')}} \\\\ \\vspace{1pt}`;
+
+    // Only add contact information if the contact section is visible
+    if (visibilityOptions.sectionVisibility.contact) {
+      let contactParts = [];
+
+      // Only add phone if visible
+      if (visibilityOptions.contactFields.phone && contact.phone) {
+        contactParts.push(escapeLaTeX(contact.phone));
+      }
       
-      latex += ` $|$ \\href{${escapeLaTeX(linkedinUrl)}}{\\underline{${escapeLaTeX(displayText)}}}`;
-    }
-    
-    // For GitHub - prepend "github.com/" if it doesn't already include it
-    if (contact.github) {
-      const githubUrl = contact.github.includes('github.com/') 
-        ? contact.github 
-        : `https://github.com/${contact.github}`;
-      const displayText = githubUrl.replace(/^https?:\/\//, '');
+      // Only add email if visible
+      if (visibilityOptions.contactFields.email && contact.email) {
+        contactParts.push(`\\href{mailto:${escapeLaTeX(contact.email)}}{\\underline{${escapeLaTeX(contact.email)}}}`);
+      }
       
-      latex += ` $|$ \\href{${escapeLaTeX(githubUrl)}}{\\underline{${escapeLaTeX(displayText)}}}`;
+      // Only add website if visible
+      if (visibilityOptions.contactFields.website && contact.website) {
+        contactParts.push(`\\href{${escapeLaTeX(contact.website)}}{\\underline{${escapeLaTeX(contact.website.replace(/^https?:\/\//, ''))}}}`);
+      }
+      
+      // Only add LinkedIn if visible
+      if (visibilityOptions.contactFields.linkedin && contact.linkedin) {
+        const linkedinUrl = contact.linkedin.includes('linkedin.com/in/') 
+          ? contact.linkedin 
+          : `https://linkedin.com/in/${contact.linkedin}`;
+        const displayText = linkedinUrl.replace(/^https?:\/\//, '');
+        
+        contactParts.push(`\\href{${escapeLaTeX(linkedinUrl)}}{\\underline{${escapeLaTeX(displayText)}}}`);
+      }
+      
+      // Only add GitHub if visible
+      if (visibilityOptions.contactFields.github && contact.github) {
+        const githubUrl = contact.github.includes('github.com/') 
+          ? contact.github 
+          : `https://github.com/${contact.github}`;
+        const displayText = githubUrl.replace(/^https?:\/\//, '');
+        
+        contactParts.push(`\\href{${escapeLaTeX(githubUrl)}}{\\underline{${escapeLaTeX(displayText)}}}`);
+      }
+
+      // Add contact information with separators if there's any visible contact info
+      if (contactParts.length > 0) {
+        latex += `
+    \\small ${contactParts.join(' $|$ ')}`;
+      }
     }
     
     latex += `
@@ -120,8 +189,8 @@ export const generateLatexResume = (state: AppState): string => {
 
 `;
   
-    // Add Education Section if it exists
-    if (sections.education.length > 0) {
+    // Add Education Section if it exists and is visible
+    if (visibilityOptions.sectionVisibility.education && sections.education.length > 0) {
       latex += `%-----------EDUCATION-----------
 \\section{${escapeLaTeX(sections.educationTitle)}}
   \\resumeSubHeadingListStart
@@ -135,19 +204,12 @@ export const generateLatexResume = (state: AppState): string => {
       {${escapeLaTeX(edu.school || '')}}{${escapeLaTeX(edu.location || '')}}
       {${escapeLaTeX(edu.degree || '')}}{${escapeLaTeX(edu.dates || '')}}`;
         
-        // Add bullets if any exist
-        const validBullets = edu.bullets.filter(bullet => bullet.text.trim() !== '');
-        if (validBullets.length > 0) {
+        // Add category and skills if they exist
+        if (edu.category.trim() !== '' || edu.skills.trim() !== '') {
           latex += `
-      \\resumeItemListStart`;
-          
-          validBullets.forEach(bullet => {
-            latex += `
-        \\resumeItem{${escapeLaTeX(bullet.text)}}`;
-          });
-          
-          latex += `
-      \\resumeItemListEnd`;
+      \\small{\\item{
+        \\textbf{${escapeLaTeX(edu.category)}}{: ${escapeLaTeX(edu.skills)}}
+      }}`;
         }
       });
   
@@ -156,8 +218,8 @@ export const generateLatexResume = (state: AppState): string => {
 `;
     }
   
-    // Add Experience Section if it exists
-    if (sections.experience.length > 0) {
+    // Add Experience Section if it exists and is visible
+    if (visibilityOptions.sectionVisibility.experience && sections.experience.length > 0) {
       latex += `%-----------EXPERIENCE-----------
 \\section{${escapeLaTeX(sections.experienceTitle)}}
   \\resumeSubHeadingListStart
@@ -169,8 +231,8 @@ export const generateLatexResume = (state: AppState): string => {
         if (!exp.title && !exp.organization) return;
         
         latex += `    \\resumeSubheading
-      {${escapeLaTeX(exp.organization || '')}}{${escapeLaTeX(exp.location || '')}}
-      {${escapeLaTeX(exp.title || '')}}{${escapeLaTeX(exp.dates || '')}}`;
+      {${escapeLaTeX(exp.title || '')}}{${escapeLaTeX(exp.location || '')}}
+      {${escapeLaTeX(exp.organization || '')}}{${escapeLaTeX(exp.dates || '')}}`;
         
         // Add bullets if any exist
         const validBullets = exp.bullets.filter(bullet => bullet.text.trim() !== '');
@@ -193,8 +255,8 @@ export const generateLatexResume = (state: AppState): string => {
 `;
     }
   
-    // Add Projects Section if it exists
-    if (sections.projects.length > 0) {
+    // Add Projects Section if it exists and is visible
+    if (visibilityOptions.sectionVisibility.projects && sections.projects.length > 0) {
       latex += `%-----------PROJECTS-----------
 \\section{${escapeLaTeX(sections.projectsTitle)}}
     \\resumeSubHeadingListStart
@@ -231,9 +293,9 @@ export const generateLatexResume = (state: AppState): string => {
 `;
     }
   
-    // Add Skills Section if it exists
+    // Add Skills Section if it exists and is visible
     const validSkills = sections.skills.filter(skill => skill.category.trim() !== '' || skill.skills.trim() !== '');
-    if (validSkills.length > 0) {
+    if (visibilityOptions.sectionVisibility.additional && validSkills.length > 0) {
       latex += `%-----------TECHNICAL SKILLS-----------
 \\section{${escapeLaTeX(sections.additionalTitle)}}
  \\begin{itemize}[leftmargin=0.15in, label={}]

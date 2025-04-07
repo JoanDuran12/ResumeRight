@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { generateLatexResume } from '../../app/components/resume/latexGenerator';
-import type { AppState } from '../../app/components/resume/resumeEditor'; // Adjusted import path
+import { generateLatexResume, VisibilityOptions } from '../../app/components/resume/latexGenerator';
+import type { AppState } from '../../app/components/resume/resumeEditor';
 import fs from 'fs/promises';
 import path from 'path';
 import { exec } from 'child_process';
@@ -19,15 +19,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let tempDir: string | null = null;
 
   try {
-    const state: AppState = req.body;
+    // Extract resumeData and visibilityOptions from the request body
+    const { resumeData, visibilityOptions } = req.body;
+    let state: AppState;
+
+    // Handle both old and new request formats
+    if (resumeData && typeof resumeData === 'object') {
+      // New format with separate resumeData and visibilityOptions
+      state = resumeData;
+    } else {
+      // Legacy format where the entire body is the AppState
+      state = req.body;
+    }
 
     // Basic validation of the incoming state
     if (!state || typeof state !== 'object' || !state.sections || !state.contact) {
       return res.status(400).json({ message: 'Invalid request body: Incomplete or malformed AppState received.' });
     }
 
-    // 1. Generate LaTeX content using the imported function
-    const latexContent = generateLatexResume(state);
+    // 1. Generate LaTeX content using the imported function with visibility options if provided
+    const latexContent = generateLatexResume(
+      state, 
+      visibilityOptions as VisibilityOptions | undefined
+    );
 
     // 2. Create a unique temporary directory for compilation files
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'resume-pdf-'));
@@ -44,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 4. Run pdflatex command. Running it twice often resolves cross-referencing issues.
     // -interaction=nonstopmode prevents pdflatex from stopping on errors.
     // We run it within the temporary directory (cwd).
-    const latexCommand = `pdflatex -interaction=nonstopmode -output-directory="${tempDir}" "${texFilePath}"`;
+    const latexCommand = `/Library/TeX/texbin/pdflatex -interaction=nonstopmode -output-directory="${tempDir}" "${texFilePath}"`;
     try {
         console.log(`Running LaTeX command (Pass 1): ${latexCommand}`);
         await execPromise(latexCommand, { cwd: tempDir });

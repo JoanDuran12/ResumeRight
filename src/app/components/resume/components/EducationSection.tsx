@@ -2,9 +2,7 @@ import React from 'react';
 import styles from '@/app/resume.module.css';
 import EditableText from './EditableText';
 import SectionHeader from './SectionHeader';
-import EditableBulletItem from './EditableBulletItem';
 import DeleteSectionButton from './DeleteSectionButton';
-import AddBulletButton from './AddBulletButton';
 
 interface Education {
   id: string;
@@ -12,7 +10,8 @@ interface Education {
   degree: string;
   location: string;
   dates: string;
-  bullets: string[];
+  category: string;
+  skills: string;
 }
 
 interface EducationSectionProps {
@@ -20,9 +19,6 @@ interface EducationSectionProps {
   sectionTitle: string;
   updateSectionTitle: (value: string) => void;
   updateEducation: (index: number, field: string, value: string) => void;
-  updateEducationBullet: (eduIndex: number, bulletIndex: number, value: string) => void;
-  deleteEducationBullet: (eduIndex: number, bulletIndex: number) => void;
-  addEducationBullet: (eduIndex: number) => void;
   onAddNew?: () => void;
   deleteSection: (id: string) => void;
 }
@@ -31,10 +27,7 @@ const EducationSection: React.FC<EducationSectionProps> = ({
   educations, 
   sectionTitle,
   updateSectionTitle,
-  updateEducation, 
-  updateEducationBullet, 
-  deleteEducationBullet, 
-  addEducationBullet,
+  updateEducation,
   onAddNew,
   deleteSection
 }) => {
@@ -53,21 +46,18 @@ const EducationSection: React.FC<EducationSectionProps> = ({
             label="Delete education entry"
           />
           <div className={styles.resumeItemHeader}>
-            <div className={styles.titleWithButton}>
-              <EditableText
-                value={education.school}
-                onChange={(value) => updateEducation(eduIndex, 'school', value)}
-                className={styles.resumeItemTitle}
-                placeholder="Name of institution"
-              />
-              <AddBulletButton onClick={() => addEducationBullet(eduIndex)} />
-            </div>
             <EditableText
-              value={education.location}
-              onChange={(value) => updateEducation(eduIndex, 'location', value)}
+              value={education.school}
+              onChange={(value) => updateEducation(eduIndex, 'school', value)}
+              className={styles.resumeItemTitle}
+              placeholder="Name of institution"
+            />
+            <EditableText
+              value={education.dates}
+              onChange={(value) => updateEducation(eduIndex, 'dates', value)}
               className={styles.resumeItemLocation}
               inline={true}
-              placeholder="Location"
+              placeholder="Enter a date"
             />
           </div>
           <div className={styles.resumeItemSubheader}>
@@ -78,24 +68,30 @@ const EducationSection: React.FC<EducationSectionProps> = ({
               placeholder="Degree"
             />
             <EditableText
-              value={education.dates}
-              onChange={(value) => updateEducation(eduIndex, 'dates', value)}
+              value={education.location}
+              onChange={(value) => updateEducation(eduIndex, 'location', value)}
               className={styles.resumeItemDate}
               inline={true}
-              placeholder="Enter a date"
+              placeholder="Location"
             />
           </div>
-          <ul className={styles.resumeBullets}>
-            {education.bullets.map((bullet, bulletIndex) => (
-              <EditableBulletItem
-                key={bulletIndex}
-                value={bullet}
-                onChange={(value) => updateEducationBullet(eduIndex, bulletIndex, value)}
-                onDelete={() => deleteEducationBullet(eduIndex, bulletIndex)}
-                placeholder="Write an accomplishment"
-              />
-            ))}
-          </ul>
+          <div className={styles.skillRow}>
+            <EditableText
+              value={education.category}
+              onChange={(value) => updateEducation(eduIndex, 'category', value)}
+              className={styles.resumeSkillsCategory}
+              placeholder="Category"
+              inline={true}
+            />
+            <span>: </span>
+            <EditableText
+              value={education.skills}
+              onChange={(value) => updateEducation(eduIndex, 'skills', value)}
+              className={styles.resumeSkillsList}
+              placeholder="Key skills"
+              inline={true}
+            />
+          </div>
         </div>
       ))}
     </section>

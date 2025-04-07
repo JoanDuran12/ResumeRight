@@ -57,11 +57,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const loginWithGoogle = async (): Promise<boolean> => {
     try {
-      await firebaseSignInWithGoogle();
-      return true;
-    } catch (error) {
+      const success = await firebaseSignInWithGoogle();
+      // If signInWithGoogle was successful, return true
+      // If it was manually handled (returned false but not an error), return false
+      return success;
+    } catch (error: any) {
       console.error('Google login error:', error);
-      return false;
+      
+      // These errors are already handled in the config file
+      if (error.code === 'auth/cancelled-popup-request' || 
+          error.code === 'auth/popup-closed-by-user') {
+        return false;
+      }
+      
+      // Re-throw other errors for components to handle
+      throw error;
     }
   };
 

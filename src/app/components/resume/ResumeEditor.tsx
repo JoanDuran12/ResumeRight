@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import styles from '@/app/resume.module.css';
 import ProjectsSection from './components/ProjectsSection';
 import ExperienceSection from './components/ExperienceSection';
@@ -16,7 +16,10 @@ import {
   IconArrowForwardUp,
   IconTrash,
   IconFileUpload,
-  IconDownload, // Added download icon
+  IconDownload,
+  IconDeviceFloppy,
+  IconX,
+  IconAlertCircle,
 } from '@tabler/icons-react';
 import {
   // Interfaces
@@ -50,28 +53,436 @@ import {
   saveToLocalStorage,
   loadFromLocalStorage,
   clearLocalStorage,
-  getHistoryStats,    // New function
-  getRecentActions,   // New function
+  getHistoryStats,
+  getRecentActions,
+  saveResume,
 } from './resumeEditor';
+import { useAuth } from '@/app/contexts/AuthContext';
+import { resumeService } from '@/app/services/resumeService';
+
+// Save Dialog component
+interface SaveDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (resumeName: string) => void;
+  initialName: string;
+  isProcessing: boolean;
+  confirmOverwrite?: boolean;
+  onConfirmOverwrite?: (resumeName: string) => void;
+  saveStatus?: 'success' | 'error' | null;
+  errorMessage?: string;
+}
+
+const SaveDialog: React.FC<SaveDialogProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  initialName, 
+  isProcessing,
+  confirmOverwrite = false,
+  onConfirmOverwrite,
+  saveStatus = null,
+  errorMessage = ''
+}) => {
+  const [resumeName, setResumeName] = useState(initialName || '');
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    if (isOpen && initialName) {
+      setResumeName(initialName);
+    }
+  }, [isOpen, initialName]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (resumeName.trim()) {
+      onSave(resumeName.trim());
+    }
+  };
+
+  // Render success state
+  if (saveStatus === 'success') {
+    return (
+      <div className="fixed inset-0 backdrop-blur-sm bg-black/30 z-50 flex items-center justify-center">
+        <div className={`w-full max-w-md rounded-lg shadow-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} p-6`}>
+          <div className="flex flex-col items-center py-6">
+            <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className={`text-xl font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
+              Resume Saved!
+            </h3>
+            <p className={`text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6`}>
+              Your resume "{resumeName}" has been saved successfully.
+            </p>
+            <button
+              onClick={onClose}
+              className="px-6 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render error state
+  if (saveStatus === 'error') {
+    return (
+      <div className="fixed inset-0 backdrop-blur-sm bg-black/30 z-50 flex items-center justify-center">
+        <div className={`w-full max-w-md rounded-lg shadow-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} p-6`}>
+          <div className="flex flex-col items-center py-6">
+            <div className="h-16 w-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h3 className={`text-xl font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
+              Save Failed
+            </h3>
+            <p className={`text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6`}>
+              {errorMessage || "There was an error saving your resume. Please try again."}
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={onClose}
+                className={`px-4 py-2 rounded-md ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => onSave(resumeName)}
+                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main dialog UI for input or confirmation
+  return (
+    <div className="fixed inset-0 backdrop-blur-sm bg-black/30 z-50 flex items-center justify-center">
+      <div className={`w-full max-w-md rounded-lg shadow-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} p-6`}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            {confirmOverwrite ? 'Resume Already Exists' : 'Save Resume'}
+          </h3>
+          <button
+            onClick={onClose}
+            className={`p-1 rounded-full ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
+          >
+            <IconX size={20} />
+          </button>
+        </div>
+
+        {confirmOverwrite ? (
+          <div>
+            <div className="flex items-start mb-4">
+              <IconAlertCircle size={24} className="text-orange-500 mr-2 mt-0.5" />
+              <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                A resume named <strong>"{resumeName}"</strong> already exists. Would you like to overwrite it?
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={onClose}
+                className={`px-4 py-2 rounded-md ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                disabled={isProcessing}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => onConfirmOverwrite && onConfirmOverwrite(resumeName)}
+                className="px-4 py-2 rounded-md bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50"
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Saving...' : 'Overwrite'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label 
+                htmlFor="resume-name" 
+                className={`block mb-2 text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+              >
+                Resume Title
+              </label>
+              <input
+                id="resume-name"
+                type="text"
+                value={resumeName}
+                onChange={(e) => setResumeName(e.target.value)}
+                placeholder="Enter a title for your resume (e.g., 'Software Engineer 2023')"
+                className={`w-full px-3 py-2 rounded-md border ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                autoFocus
+              />
+              <p className={`mt-1 text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                This is just the document title and won't appear on your resume.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className={`px-4 py-2 rounded-md ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                disabled={isProcessing}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                disabled={!resumeName.trim() || isProcessing}
+              >
+                {isProcessing ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Add a new LoginDialog component after the SaveDialog component
+interface LoginDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onLogin: () => void;
+}
+
+const LoginDialog: React.FC<LoginDialogProps> = ({ 
+  isOpen, 
+  onClose, 
+  onLogin 
+}) => {
+  const { theme } = useTheme();
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 backdrop-blur-sm bg-black/30 z-50 flex items-center justify-center">
+      <div className={`w-full max-w-md rounded-lg shadow-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} p-6`}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            Sign In Required
+          </h3>
+          <button
+            onClick={onClose}
+            className={`p-1 rounded-full ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
+          >
+            <IconX size={20} />
+          </button>
+        </div>
+
+        <div className="flex items-start mb-6">
+          <IconAlertCircle size={24} className="text-blue-500 mr-2 mt-0.5" />
+          <div>
+            <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-2`}>
+              You need to be signed in to save your resume.
+            </p>
+            <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-sm`}>
+              Create an account to save your work and access it from any device.
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onClose}
+            className={`px-4 py-2 rounded-md ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onLogin}
+            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Add after the LoginDialog component
+interface OptionsDropdownProps {
+  isOpen: boolean;
+  onClose: () => void;
+  options: {
+    contactFields: Record<string, boolean>;
+    sectionVisibility: Record<string, boolean>;
+  };
+  onToggleContactField: (field: string) => void;
+  onToggleSection: (section: string) => void;
+}
+
+const OptionsDropdown: React.FC<OptionsDropdownProps> = ({
+  isOpen,
+  onClose,
+  options,
+  onToggleContactField,
+  onToggleSection
+}) => {
+  const { theme } = useTheme();
+  
+  if (!isOpen) return null;
+  
+  // Use event.stopPropagation to prevent clicks inside the dropdown from closing it
+  const handleDropdownClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+  
+  return (
+    <div
+      className="fixed inset-0 z-40"
+      onClick={onClose}
+    >
+      <div 
+        className={`fixed w-64 max-h-[400px] overflow-y-auto rounded-lg shadow-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} p-3 z-50 border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}
+        onClick={handleDropdownClick}
+        style={{ top: 'var(--dropdown-top)', left: 'var(--dropdown-left)' }}
+      >
+        <div className="mb-3">
+          <h3 className={`text-sm font-semibold mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            Resume Options
+          </h3>
+          <div className={`h-px w-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} my-2`}></div>
+        </div>
+        
+        <div className="mb-3">
+          {/* Contact section toggle */}
+          <div className="flex items-center justify-between mb-2">
+            <h4 className={`text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+              Contact Section
+            </h4>
+            <button
+              onClick={() => onToggleSection('contact')}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${options.sectionVisibility.contact ? (theme === 'dark' ? 'bg-blue-600' : 'bg-blue-600') : (theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300')}`}
+            >
+              <span
+                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${options.sectionVisibility.contact ? 'translate-x-5' : 'translate-x-1'}`}
+              />
+            </button>
+          </div>
+          
+          {/* Only show contact fields if contact section is visible */}
+          {options.sectionVisibility.contact && (
+            <div className={`ml-3 pt-1 pl-2 border-l ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+              <p className={`text-xs mb-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>Contact Fields:</p>
+              <div className="space-y-2">
+                {Object.entries(options.contactFields).map(([field, visible]) => (
+                  <div key={field} className="flex items-center justify-between">
+                    <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {field.charAt(0).toUpperCase() + field.slice(1)}
+                    </span>
+                    <button
+                      onClick={() => onToggleContactField(field)}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${visible ? (theme === 'dark' ? 'bg-blue-600' : 'bg-blue-600') : (theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300')}`}
+                    >
+                      <span
+                        className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${visible ? 'translate-x-5' : 'translate-x-1'}`}
+                      />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <div>
+          <h4 className={`text-xs font-medium uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+            Resume Sections
+          </h4>
+          <div className="space-y-2">
+            {Object.entries(options.sectionVisibility)
+              .filter(([section]) => section !== 'contact') // Don't repeat the contact section here
+              .map(([section, visible]) => (
+                <div key={section} className="flex items-center justify-between">
+                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {section.charAt(0).toUpperCase() + section.slice(1)}
+                  </span>
+                  <button
+                    onClick={() => onToggleSection(section)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${visible ? (theme === 'dark' ? 'bg-blue-600' : 'bg-blue-600') : (theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300')}`}
+                  >
+                    <span
+                      className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${visible ? 'translate-x-5' : 'translate-x-1'}`}
+                    />
+                  </button>
+                </div>
+              ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ResumeEditor: React.FC = () => {
   const { theme } = useTheme();
-  const [state, setState] = useState<AppState>(() => {
-    const savedState = loadFromLocalStorage();
-    return savedState || getInitialHistoryState().currentState;
-  });
+  const { user } = useAuth();
+  
+  // Initialize with default state first
   const [history, setHistory] = useState<HistoryState>(() => getInitialHistoryState());
   const [historyStats, setHistoryStats] = useState(() => getHistoryStats(history));
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [resumeId, setResumeId] = useState<string | null>(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
+  const [resumeToCheck, setResumeToCheck] = useState('');
+  const [suggestedTitle, setSuggestedTitle] = useState('My Resume');
+  const [saveStatus, setSaveStatus] = useState<'success' | 'error' | null>(null);
+  const [saveErrorMessage, setSaveErrorMessage] = useState('');
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+  const [visibilityOptions, setVisibilityOptions] = useState({
+    // Default values
+    contactFields: {
+      phone: true,
+      email: true,
+      website: true,
+      linkedin: true,
+      github: true,
+    },
+    sectionVisibility: {
+      contact: true,
+      education: true,
+      experience: true,
+      projects: true,
+      additional: true,
+    }
+  });
+  
   // Get current state from history
   const currentState = history.currentState;
   const { sections, name, contact } = currentState;
 
-  // Load data from localStorage on initial render
+  // Load data from localStorage on initial render (client side only)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const loadedState = loadFromLocalStorage();
+      
       if (loadedState) {
         // Initialize history with loaded state
         const initialEvent = {
@@ -87,8 +498,40 @@ const ResumeEditor: React.FC = () => {
           currentIndex: 0,
           currentState: loadedState
         });
+        
+        // Check if there's a saved resumeId in localStorage
+        try {
+          const savedData = localStorage.getItem('resumeEditorData');
+          if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            if (parsedData.resumeId) {
+              setResumeId(parsedData.resumeId);
+              
+              // If this is a loaded resume, get its title to use as default when saving
+              const getResumeTitle = async () => {
+                try {
+                  const resumeData = await resumeService.getResume(parsedData.resumeId);
+                  if (resumeData && resumeData.title) {
+                    setSuggestedTitle(resumeData.title);
+                  }
+                } catch (err) {
+                  console.error("Error fetching resume title:", err);
+                }
+              };
+              
+              getResumeTitle();
+            }
+          }
+        } catch (err) {
+          console.error('Error reading resumeId from localStorage:', err);
+        }
       }
       // If nothing loaded, the initial state from useState is used.
+
+      // Initialize visibility options from localStorage
+      if (loadedState?.visibilityOptions) {
+        setVisibilityOptions(loadedState.visibilityOptions);
+      }
     }
   }, []); // Run only once on mount
 
@@ -136,7 +579,7 @@ const ResumeEditor: React.FC = () => {
     }
   };
 
-  // New download handler moved inside the component
+  // Update the handleDownloadPDF function to include visibility options
   const handleDownloadPDF = async () => {
     if (!currentState) {
       console.error("Resume data is not available");
@@ -148,13 +591,16 @@ const ResumeEditor: React.FC = () => {
       setIsGeneratingPDF(true);
       console.log("Sending data to generate PDF:", currentState);
 
-      // Make API call to generate PDF
+      // Make API call to generate PDF, including visibility options
       const response = await fetch('/api/generate-pdf', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(currentState),
+        body: JSON.stringify({
+          resumeData: currentState,
+          visibilityOptions: visibilityOptions
+        }),
       });
 
       console.log("Response status:", response.status);
@@ -244,25 +690,6 @@ const ResumeEditor: React.FC = () => {
     updateEducation(currentState, index, field as keyof EducationSectionType, value, setHistory);
   };
 
-  const handleUpdateEducationBullet = (eduIndex: number, bulletIndex: number, value: string) => {
-    updateEducationBullet(currentState, eduIndex, bulletIndex, value, setHistory);
-  };
-
-  const deleteEducationBullet = (eduIndex: number, bulletIndex: number) => {
-    const eduId = sections.education[eduIndex]?.id;
-    const bulletId = sections.education[eduIndex]?.bullets[bulletIndex]?.id;
-    if (eduId && bulletId) {
-      handleDeleteBullet('education', eduId, bulletId);
-    }
-  };
-
-  const addEducationBullet = (eduIndex: number) => {
-    const eduId = sections.education[eduIndex]?.id;
-    if (eduId) {
-      handleAddBullet('education', eduId);
-    }
-  };
-
   // Experience-specific handlers
   const handleUpdateExperience = (index: number, field: string, value: string) => {
     updateExperience(currentState, index, field as keyof ExperienceSectionType, value, setHistory);
@@ -338,6 +765,203 @@ const ResumeEditor: React.FC = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleUndo, handleRedo]);
 
+  // Start the save process by opening the dialog
+  const handleOpenSaveDialog = () => {
+    if (!user) {
+      setShowLoginDialog(true);
+      return;
+    }
+    
+    setSaveError(null);
+    
+    // Check if we have a resumeId from localStorage
+    if (resumeId) {
+      // If we have a resumeId, try to get the associated title from the database
+      const getResumeTitle = async () => {
+        try {
+          const resumeData = await resumeService.getResume(resumeId);
+          if (resumeData && resumeData.title) {
+            setSuggestedTitle(resumeData.title);
+            setShowSaveDialog(true);
+          } else {
+            // Fallback to name-based title if we can't get the original title
+            const newSuggestedTitle = currentState.name ? 
+              `${currentState.name.split(' ')[0]}'s Resume` : 
+              'My Resume';
+            setSuggestedTitle(newSuggestedTitle);
+            setShowSaveDialog(true);
+          }
+        } catch (err) {
+          console.error("Error fetching resume title:", err);
+          // Fallback to name-based title
+          const newSuggestedTitle = currentState.name ? 
+            `${currentState.name.split(' ')[0]}'s Resume` : 
+            'My Resume';
+          setSuggestedTitle(newSuggestedTitle);
+          setShowSaveDialog(true);
+        }
+      };
+      
+      getResumeTitle();
+    } else {
+      // No resumeId, use name-based title
+      const newSuggestedTitle = currentState.name ? 
+        `${currentState.name.split(' ')[0]}'s Resume` : 
+        'My Resume';
+      setSuggestedTitle(newSuggestedTitle);
+      setShowSaveDialog(true);
+    }
+  };
+
+  // Check if resume with this name exists
+  const checkResumeExists = async (resumeName) => {
+    try {
+      // Don't set isSaving true yet, just when checking for existence
+      const checkingState = true;
+      setSaveStatus(null);
+      
+      // Get all resumes for this user
+      const userResumes = await resumeService.getUserResumes(user.uid);
+      
+      // Check if a resume with this name exists
+      const existingResume = userResumes.find(r => r.title.toLowerCase() === resumeName.toLowerCase());
+      
+      if (existingResume) {
+        // Store the resume ID for potential overwrite
+        setResumeId(existingResume.id);
+        setResumeToCheck(resumeName);
+        setShowSaveDialog(false);
+        setShowOverwriteConfirm(true);
+      } else {
+        // No conflict, proceed with save
+        setIsSaving(true); // Only now set isSaving to true
+        proceedWithSave(resumeName);
+      }
+    } catch (error) {
+      console.error('Error checking existing resumes:', error);
+      setSaveStatus('error');
+      setSaveErrorMessage('Error checking existing resumes: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      setIsSaving(false);
+    }
+  };
+
+  // Proceed with actual save operation
+  const proceedWithSave = async (resumeTitle) => {
+    try {
+      // Don't update the name in current state - keep them separate
+      // We're only saving the resume with this title, not changing the person's name
+
+      // Save to Firebase
+      const savedResumeId = await saveResume(history.currentState, resumeId, resumeTitle);
+      setResumeId(savedResumeId);
+      
+      // Show success status
+      setSaveStatus('success');
+      
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        setSaveStatus(null);
+        setShowSaveDialog(false);
+        setShowOverwriteConfirm(false);
+      }, 3000);
+      
+      setIsSaving(false);
+    } catch (error) {
+      console.error('Error saving resume:', error);
+      setSaveStatus('error');
+      setSaveErrorMessage(error instanceof Error ? error.message : 'Failed to save resume');
+      setIsSaving(false);
+    }
+  };
+
+  // Handle the confirmation to overwrite
+  const handleOverwriteConfirm = async (resumeName) => {
+    // Now set isSaving to true since user confirmed
+    setIsSaving(true);
+    await proceedWithSave(resumeName);
+  };
+
+  // Add handler for login button
+  const handleLogin = () => {
+    // Close the login dialog
+    setShowLoginDialog(false);
+    // Navigate to login page
+    window.location.href = '/login';
+  };
+
+  // Add these handler functions
+  const toggleContactField = (field: string) => {
+    setVisibilityOptions(prev => ({
+      ...prev,
+      contactFields: {
+        ...prev.contactFields,
+        [field]: !prev.contactFields[field as keyof typeof prev.contactFields]
+      }
+    }));
+  };
+
+  const toggleSection = (section: string) => {
+    setVisibilityOptions(prev => ({
+      ...prev,
+      sectionVisibility: {
+        ...prev.sectionVisibility,
+        [section]: !prev.sectionVisibility[section as keyof typeof prev.sectionVisibility]
+      }
+    }));
+  };
+
+  // Modify the JSX containing the Resume Options button - adjust this button to have a ref we can use
+  // Add useRef and position calculation in the ResumeEditor component
+  const optionsButtonRef = useRef<HTMLButtonElement>(null);
+  const [optionsPosition, setOptionsPosition] = useState({ top: 0, left: 0 });
+
+  // Update position when button is clicked
+  const handleToggleOptions = () => {
+    if (optionsButtonRef.current) {
+      const rect = optionsButtonRef.current.getBoundingClientRect();
+      // Apply position directly to document root as CSS variables
+      document.documentElement.style.setProperty('--dropdown-top', `${rect.bottom + 5}px`);
+      document.documentElement.style.setProperty('--dropdown-left', `${rect.left}px`);
+    }
+    setShowOptions(!showOptions);
+  };
+
+  // Add useEffect to update the history state when visibility options change
+  useEffect(() => {
+    if (history && history.currentState) {
+      setHistory(prev => {
+        const newState = {
+          ...prev,
+          currentState: {
+            ...prev.currentState,
+            visibilityOptions
+          }
+        };
+        return newState;
+      });
+    }
+  }, [visibilityOptions]);
+
+  // Handle complete dialog close
+  const handleCloseDialog = () => {
+    // If closing from success or error state, close everything
+    if (saveStatus === 'success' || saveStatus === 'error') {
+      setShowSaveDialog(false);
+      setShowOverwriteConfirm(false);
+      setSaveStatus(null);
+    } else {
+      // If closing the overwrite dialog, return to the save dialog
+      if (showOverwriteConfirm) {
+        setShowOverwriteConfirm(false);
+        setShowSaveDialog(true);
+      } else {
+        // Otherwise just close the save dialog
+        setShowSaveDialog(false);
+      }
+      setSaveStatus(null);
+    }
+  };
+
   // --- JSX ---
   return (
     <div className="flex flex-col">
@@ -345,22 +969,39 @@ const ResumeEditor: React.FC = () => {
       <div className={`w-full ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-b shadow-sm sticky top-0 z-10 py-3 px-4`}>
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           {/* Left Buttons */}
-            <div className="flex items-center space-x-3">
-                <button 
-              className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-50'} border rounded-md px-3 py-1.5 transition-colors`}
+          <div className="flex items-center space-x-3">
+            <button 
+              ref={optionsButtonRef}
+              onClick={handleToggleOptions}
+              className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-50'} border rounded-md px-3 py-1.5 transition-colors relative z-50`}
             >
               <IconUser size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
-              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : ''}`}>Contact Header</span>
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : ''}`}>Resume Options</span>
               <IconChevronDown size={16} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
             </button>
             
             <button 
-              className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-50'} border rounded-md px-3 py-1.5 transition-colors`}
+              onClick={handleOpenSaveDialog}
+              disabled={isSaving}
+              className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-50'} border rounded-md px-3 py-1.5 transition-colors disabled:opacity-50`}
             >
-              <IconLayoutList size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
-              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : ''}`}>Content Blocks</span>
-              <IconChevronDown size={16} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+              <IconDeviceFloppy size={18} stroke={1.5} className={theme === 'dark' ? 'text-gray-300' : ''} />
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : ''}`}>
+                {isSaving ? 'Saving...' : 'Save'}
+              </span>
             </button>
+
+            {/* Save Status Messages */}
+            {saveError && (
+              <div className="text-red-500 text-sm">
+                {saveError}
+              </div>
+            )}
+            {saveSuccess && (
+              <div className="text-green-500 text-sm">
+                Resume saved successfully!
+              </div>
+            )}
           </div>
     
           {/* Right Buttons */}
@@ -433,77 +1074,140 @@ const ResumeEditor: React.FC = () => {
         <div className={`${styles.resumePage} min-h-[1140px] w-[1000px] bg-white shadow-md mx-auto`}>
           <ResumeHeader
             name={name}
-            contact={contact}
+            contact={visibilityOptions.sectionVisibility.contact ? {
+              ...contact,
+              // Only pass fields that are visible
+              phone: visibilityOptions.contactFields.phone ? contact.phone : '',
+              email: visibilityOptions.contactFields.email ? contact.email : '',
+              website: visibilityOptions.contactFields.website ? contact.website : '',
+              linkedin: visibilityOptions.contactFields.linkedin ? contact.linkedin : '',
+              github: visibilityOptions.contactFields.github ? contact.github : '',
+            } : {
+              phone: '',
+              email: '',
+              website: '',
+              linkedin: '',
+              github: ''
+            }}
             setName={handleUpdateName}
             updateContact={handleUpdateContact}
+            showContactInfo={visibilityOptions.sectionVisibility.contact}
           />
 
-          <EducationSection
-            educations={sections.education.map(edu => ({
-              id: edu.id,
-              school: edu.school,
-              degree: edu.degree,
-              location: edu.location,
-              dates: edu.dates,
-              bullets: edu.bullets.map(bullet => bullet.text)
-            }))}
-            sectionTitle={sections.educationTitle}
-            updateSectionTitle={(value) => handleUpdateSectionTitle('educationTitle', value)}
-            updateEducation={handleUpdateEducation}
-            updateEducationBullet={handleUpdateEducationBullet}
-            deleteEducationBullet={deleteEducationBullet}
-            addEducationBullet={addEducationBullet}
-            onAddNew={() => handleAddSection('education')}
-            deleteSection={(id) => handleDeleteSection('education', id)}
-          />
+          {visibilityOptions.sectionVisibility.education && (
+            <EducationSection
+              educations={sections.education.map(edu => ({
+                id: edu.id,
+                school: edu.school,
+                degree: edu.degree,
+                location: edu.location,
+                dates: edu.dates,
+                category: edu.category,
+                skills: edu.skills
+              }))}
+              sectionTitle={sections.educationTitle}
+              updateSectionTitle={(value) => handleUpdateSectionTitle('educationTitle', value)}
+              updateEducation={handleUpdateEducation}
+              onAddNew={() => handleAddSection('education')}
+              deleteSection={(id) => handleDeleteSection('education', id)}
+            />
+          )}
 
-          <ExperienceSection
-            experiences={sections.experience.map(exp => ({
-              id: exp.id,
-              title: exp.title,
-              organization: exp.organization,
-              location: exp.location,
-              dates: exp.dates,
-              bullets: exp.bullets.map(bullet => bullet.text)
-            }))}
-            sectionTitle={sections.experienceTitle}
-            updateSectionTitle={(value) => handleUpdateSectionTitle('experienceTitle', value)}
-            updateExperience={handleUpdateExperience}
-            updateExperienceBullet={handleUpdateExperienceBullet}
-            deleteExperienceBullet={deleteExperienceBullet}
-            addExperienceBullet={addExperienceBullet}
-            onAddNew={() => handleAddSection('experience')}
-            deleteSection={(id) => handleDeleteSection('experience', id)}
-          />
+          {visibilityOptions.sectionVisibility.experience && (
+            <ExperienceSection
+              experiences={sections.experience.map(exp => ({
+                id: exp.id,
+                title: exp.title,
+                organization: exp.organization,
+                location: exp.location,
+                dates: exp.dates,
+                bullets: exp.bullets.map(bullet => bullet.text)
+              }))}
+              sectionTitle={sections.experienceTitle}
+              updateSectionTitle={(value) => handleUpdateSectionTitle('experienceTitle', value)}
+              updateExperience={handleUpdateExperience}
+              updateExperienceBullet={handleUpdateExperienceBullet}
+              deleteExperienceBullet={deleteExperienceBullet}
+              addExperienceBullet={addExperienceBullet}
+              onAddNew={() => handleAddSection('experience')}
+              deleteSection={(id) => handleDeleteSection('experience', id)}
+            />
+          )}
 
-          <ProjectsSection
-            projects={sections.projects.map(project => ({
-              id: project.id,
-              name: project.name,
-              tech: project.tech,
-              dates: project.dates,
-              bullets: project.bullets.map(bullet => bullet.text)
-            }))}
-            sectionTitle={sections.projectsTitle}
-            updateSectionTitle={(value) => handleUpdateSectionTitle('projectsTitle', value)}
-            updateProject={handleUpdateProject}
-            updateProjectBullet={handleUpdateProjectBullet}
-            deleteProjectBullet={deleteProjectBullet}
-            addProjectBullet={addProjectBullet}
-            onAddNew={() => handleAddSection('projects')}
-            deleteSection={(id) => handleDeleteSection('projects', id)}
-          />
+          {visibilityOptions.sectionVisibility.projects && (
+            <ProjectsSection
+              projects={sections.projects.map(proj => ({
+                id: proj.id,
+                name: proj.name,
+                tech: proj.tech,
+                dates: proj.dates,
+                bullets: proj.bullets.map(bullet => bullet.text)
+              }))}
+              sectionTitle={sections.projectsTitle}
+              updateSectionTitle={(value) => handleUpdateSectionTitle('projectsTitle', value)}
+              updateProject={handleUpdateProject}
+              updateProjectBullet={handleUpdateProjectBullet}
+              deleteProjectBullet={deleteProjectBullet}
+              addProjectBullet={addProjectBullet}
+              onAddNew={() => handleAddSection('projects')}
+              deleteSection={(id) => handleDeleteSection('projects', id)}
+            />
+          )}
 
-          <AdditionalSection
-            sectionTitle={sections.additionalTitle}
-            updateSectionTitle={(value) => handleUpdateSectionTitle('additionalTitle', value)}
-            skills={sections.skills}
-            updateSkill={handleUpdateSkill}
-            addSkillCategory={handleAddSkillCategory}
-            deleteSection={(id) => handleDeleteSection('skills', id)}
-          />
+          {visibilityOptions.sectionVisibility.additional && (
+            <AdditionalSection
+              sectionTitle={sections.additionalTitle}
+              updateSectionTitle={(value) => handleUpdateSectionTitle('additionalTitle', value)}
+              skills={sections.skills}
+              updateSkill={handleUpdateSkill}
+              addSkillCategory={handleAddSkillCategory}
+              deleteSection={(id) => handleDeleteSection('skills', id)}
+            />
+          )}
         </div>
       </div>
+
+      {/* Save Dialog */}
+      <SaveDialog
+        isOpen={showSaveDialog}
+        onClose={handleCloseDialog}
+        onSave={checkResumeExists}
+        initialName={suggestedTitle}
+        isProcessing={isSaving}
+        saveStatus={saveStatus}
+        errorMessage={saveErrorMessage}
+      />
+
+      {/* Overwrite Confirmation Dialog */}
+      <SaveDialog
+        isOpen={showOverwriteConfirm}
+        onClose={handleCloseDialog}
+        onSave={() => {}}
+        initialName={resumeToCheck}
+        isProcessing={isSaving}
+        confirmOverwrite={true}
+        onConfirmOverwrite={handleOverwriteConfirm}
+        saveStatus={saveStatus}
+        errorMessage={saveErrorMessage}
+      />
+
+      {/* Login Dialog */}
+      <LoginDialog
+        isOpen={showLoginDialog}
+        onClose={() => setShowLoginDialog(false)}
+        onLogin={handleLogin}
+      />
+
+      {/* Options Dropdown */}
+      {showOptions && (
+        <OptionsDropdown
+          isOpen={showOptions}
+          onClose={() => setShowOptions(false)}
+          options={visibilityOptions}
+          onToggleContactField={toggleContactField}
+          onToggleSection={toggleSection}
+        />
+      )}
     </div>
   );
 };

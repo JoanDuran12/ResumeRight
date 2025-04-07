@@ -63,11 +63,11 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
               <AddBulletButton onClick={() => addExperienceBullet(expIndex)} />
             </div>
             <EditableText
-              value={experience.location}
-              onChange={(value) => updateExperience(expIndex, 'location', value)}
-              className={styles.resumeItemLocation}
+              value={experience.dates}
+              onChange={(value) => updateExperience(expIndex, 'dates', value)}
+              className={styles.resumeItemDate}
               inline={true}
-              placeholder="Location"
+              placeholder="Enter a date"
             />
           </div>
           <div className={styles.resumeItemSubheader}>
@@ -78,11 +78,11 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
               placeholder="Company Name"
             />
             <EditableText
-              value={experience.dates}
-              onChange={(value) => updateExperience(expIndex, 'dates', value)}
-              className={styles.resumeItemDate}
+              value={experience.location}
+              onChange={(value) => updateExperience(expIndex, 'location', value)}
+              className={styles.resumeItemLocation}
               inline={true}
-              placeholder="Enter a date"
+              placeholder="Location"
             />
           </div>
           <ul className={styles.resumeBullets}>

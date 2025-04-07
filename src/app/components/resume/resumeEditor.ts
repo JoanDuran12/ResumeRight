@@ -1,3 +1,6 @@
+import { resumeService, ResumeContent } from '@/app/services/resumeService';
+import { VisibilityOptions } from './latexGenerator';
+
 /**
  * Represents a bullet point in a resume section
  */
@@ -17,11 +20,14 @@ export interface Section {
 /**
  * Education section with school details
  */
-export interface EducationSection extends Section {
+export interface EducationSection {
+  id: string;
   school: string;
   degree: string;
   location: string;
   dates: string;
+  category: string;
+  skills: string;
 }
 
 /**
@@ -84,6 +90,7 @@ export interface AppState {
   sections: Sections;
   name: string;
   contact: Contact;
+  visibilityOptions?: VisibilityOptions;
 }
 
 /**
@@ -268,6 +275,8 @@ export const deleteBullet = (
   bulletId: string,
   setHistory: Function
 ) => {
+  if (sectionType === 'education') return; // Education no longer has bullets
+  
   const beforeState = { ...currentState };
   
   const newSections = {
@@ -303,6 +312,8 @@ export const addBullet = (
   sectionId: string,
   setHistory: Function
 ) => {
+  if (sectionType === 'education') return; // Education no longer has bullets
+  
   const beforeState = { ...currentState };
   
   const newSections = {
@@ -395,7 +406,8 @@ export const addSection = (
       degree: '',
       location: '',
       dates: '',
-      bullets: [{ id: crypto.randomUUID(), text: '' }],
+      category: '',
+      skills: '',
     };
   }
 
@@ -468,6 +480,8 @@ export const updateSectionBullet = (
   value: string,
   setHistory: Function
 ) => {
+  if (sectionType === 'education') return; // Education no longer has bullets
+  
   const sectionArray = currentState.sections[sectionType];
   const sectionId = sectionArray[sectionIndex]?.id;
   const bulletId = sectionArray[sectionIndex]?.bullets[bulletIndex]?.id;
@@ -734,7 +748,7 @@ export const getInitialHistoryState = (): HistoryState => {
       education: [{
         id: 'initial-edu-1',
         school: '', degree: '', location: '', dates: '',
-        bullets: [{ id: crypto.randomUUID(), text: '' }]
+        category: '', skills: ''
       }],
       experience: [{
         id: 'initial-exp-1',
@@ -790,9 +804,24 @@ export const getInitialHistoryState = (): HistoryState => {
  */
 export const saveToLocalStorage = (historyState: HistoryState) => {
   try {
+    // Get existing data to preserve resumeId if it exists
+    let resumeId = null;
+    try {
+      const existingData = localStorage.getItem('resumeEditorData');
+      if (existingData) {
+        const parsed = JSON.parse(existingData);
+        if (parsed.resumeId) {
+          resumeId = parsed.resumeId;
+        }
+      }
+    } catch (e) {
+      console.error('Error reading existing localStorage data:', e);
+    }
+    
     const dataToSave = {
       currentState: historyState.currentState,
       savedAt: new Date().toISOString(),
+      resumeId: resumeId // Preserve the resumeId if it exists
     };
     localStorage.setItem('resumeEditorData', JSON.stringify(dataToSave));
   } catch (err) {
@@ -862,4 +891,92 @@ export const getRecentActions = (historyState: HistoryState, count: number = 5) 
       isCurrent: historyState.events.indexOf(event) === historyState.currentIndex
     }))
     .reverse();
+};
+
+/**
+ * Sanitizes a string to be used as a Firebase document ID
+ */
+const sanitizeId = (title: string): string => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-')  // Replace non-alphanumeric with hyphens
+    .replace(/-+/g, '-')         // Replace multiple hyphens with single hyphen
+    .replace(/^-|-$/g, '');      // Remove leading/trailing hyphens
+};
+
+/**
+ * Saves the current resume state to Firebase
+ */
+export const saveResume = async (
+  currentState: AppState,
+  resumeId: string | null = null,
+  resumeTitle: string = 'Untitled Resume'
+): Promise<string> => {
+  try {
+    // Convert AppState to ResumeContent format
+    const resumeContent: ResumeContent = {
+      personalInfo: {
+        name: currentState.name,
+        email: currentState.contact.email,
+        phone: currentState.contact.phone,
+        website: currentState.contact.website,
+        linkedin: currentState.contact.linkedin,
+        github: currentState.contact.github,
+      },
+      education: currentState.sections.education.map(edu => ({
+        id: edu.id,
+        school: edu.school,
+        degree: edu.degree,
+        location: edu.location,
+        date: edu.dates,
+        category: edu.category,
+        skills: edu.skills,
+      })),
+      experience: currentState.sections.experience.map(exp => ({
+        id: exp.id,
+        company: exp.organization,
+        title: exp.title,
+        location: exp.location,
+        startDate: exp.dates.split(' - ')[0],
+        endDate: exp.dates.split(' - ')[1] || exp.dates,
+        bullets: exp.bullets.map(bullet => ({
+          id: bullet.id,
+          text: bullet.text,
+        })),
+      })),
+      projects: currentState.sections.projects.map(proj => ({
+        id: proj.id,
+        name: proj.name,
+        tech: proj.tech,
+        dates: proj.dates,
+        bullets: proj.bullets.map(bullet => ({
+          id: bullet.id,
+          text: bullet.text,
+        })),
+      })),
+      skills: currentState.sections.skills.map(skill => ({
+        id: skill.id,
+        category: skill.category,
+        skills: skill.skills,
+      })),
+      sectionTitles: {
+        educationTitle: currentState.sections.educationTitle,
+        experienceTitle: currentState.sections.experienceTitle,
+        projectsTitle: currentState.sections.projectsTitle,
+        additionalTitle: currentState.sections.additionalTitle,
+      },
+    };
+    
+    // Use resumeService to save to Firebase with the provided title
+    const savedResumeId = await resumeService.saveResume(
+      resumeId,
+      resumeTitle,  // Use the provided title parameter
+      resumeContent
+    );
+
+    return savedResumeId;
+  } catch (error) {
+    console.error('Error saving resume:', error);
+    throw error;
+  }
 };

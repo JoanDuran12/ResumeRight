@@ -11,7 +11,7 @@ import { usePathname } from "next/navigation";
 const navItems = [
   {
     title: "Features",
-    href: "#Features",
+    href: "/#Features",
   },
   {
     title: "GitHub",
@@ -20,7 +20,7 @@ const navItems = [
   },
   {
     title: "FAQ",
-    href: "#FAQ",
+    href: "/faq",
   },
 ];
 
@@ -34,6 +34,9 @@ function Header() {
   
   // Check if we're on the editor page
   const isEditorPage = pathname === "/editor" || pathname?.startsWith("/editor/");
+  
+  // Check if we're on the landing page
+  const isLandingPage = pathname === "/" || pathname === "";
   
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -72,7 +75,22 @@ function Header() {
               <span className="font-bold text-xl">ResumeRight</span>
             </Link>
           </div>
-        
+          
+          {/* Navigation Items - Shown only on landing page */}
+          {isLandingPage && (
+            <nav className="hidden md:flex items-center gap-6">
+              {navItems.map((item, index) => (
+                <Link
+                  key={index}
+                  href={item.href}
+                  target={item.target}
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  {item.title}
+                </Link>
+              ))}
+            </nav>
+          )}
           
           {/* Right Side - User Controls */}
           <div className="flex items-center gap-3">
@@ -156,6 +174,22 @@ function Header() {
             )}
           </div>
         </div>
+        
+        {/* Mobile navigation for landing page - shows below header */}
+        {isLandingPage && (
+          <nav className="md:hidden flex items-center justify-center gap-4 pt-3 mt-2 border-t border-gray-200 dark:border-gray-700">
+            {navItems.map((item, index) => (
+              <Link
+                key={index}
+                href={item.href}
+                target={item.target}
+                className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                {item.title}
+              </Link>
+            ))}
+          </nav>
+        )}
       </header>
     </div>
   );

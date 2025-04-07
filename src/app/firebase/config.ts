@@ -28,14 +28,35 @@ const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
+// Add this flag at the top to track if a popup is already open
+let isAuthPopupOpen = false;
+
 const signInWithGoogle = async () => {
   if (typeof window !== 'undefined') {
-    try {
-      await signInWithPopup(auth, googleProvider);
-      return true;
-    } catch (error) {
-      console.error("Error during Google sign-in:", error);
+    // Check if a popup is already open to prevent multiple requests
+    if (isAuthPopupOpen) {
+      console.warn("Authentication popup is already open");
       return false;
+    }
+    
+    try {
+      isAuthPopupOpen = true;
+      const result = await signInWithPopup(auth, googleProvider);
+      isAuthPopupOpen = false;
+      return true;
+    } catch (error: any) {
+      isAuthPopupOpen = false;
+      
+      // Handle specific Firebase auth errors
+      if (error.code === 'auth/cancelled-popup-request' || 
+          error.code === 'auth/popup-closed-by-user') {
+        console.log("Authentication popup was closed by the user");
+        return false;
+      }
+      
+      // Handle all other errors
+      console.error("Error during Google sign-in:", error);
+      throw error; // Re-throw to allow proper error handling in components
     }
   }
   throw new Error('Firebase auth not initialized or not in browser environment');
