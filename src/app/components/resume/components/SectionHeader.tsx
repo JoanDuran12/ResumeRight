@@ -25,6 +25,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
             className={styles.resumeSectionTitle}
             placeholder={placeholder}
             inline={true}
+            showAIModify={false}
           />
         ) : (
           title

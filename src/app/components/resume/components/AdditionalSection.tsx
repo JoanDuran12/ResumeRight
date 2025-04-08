@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from '@/app/resume.module.css';
 import EditableText from './EditableText';
+import DeleteSectionButton from './DeleteSectionButton';
 
 interface Skill {
   id: string;
@@ -35,6 +36,7 @@ const AdditionalSection: React.FC<AdditionalSectionProps> = ({
             className={styles.resumeSectionTitle}
             placeholder="Additional"
             inline={true}
+            showAIModify={false}
           />
         </h2>
         <button 
@@ -48,13 +50,11 @@ const AdditionalSection: React.FC<AdditionalSectionProps> = ({
       <div className={styles.resumeItem}>
         {skills.map((skill, index) => (
           <div key={skill.id} className={styles.skillRow}>
-            <button 
-              className={styles.deleteButton}
-              onClick={() => deleteSection(skill.id)}
-              aria-label="Delete skill category"
-            >
-              ×
-            </button>
+            <DeleteSectionButton 
+              onClick={() => deleteSection(skill.id)} 
+              label="Delete skill category"
+              sectionId={skill.id}
+            />
             <div>
               <EditableText
                 value={skill.category}
@@ -62,6 +62,7 @@ const AdditionalSection: React.FC<AdditionalSectionProps> = ({
                 className={styles.resumeSkillsCategory}
                 placeholder="Category"
                 inline={true}
+                showAIModify={false}
               />
               <span>: </span>
               <EditableText
@@ -70,6 +71,7 @@ const AdditionalSection: React.FC<AdditionalSectionProps> = ({
                 className={styles.resumeSkillsList}
                 placeholder="Key skills"
                 inline={true}
+                showAIModify={false}
               />
             </div>
           </div>

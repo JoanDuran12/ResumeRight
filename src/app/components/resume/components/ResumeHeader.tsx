@@ -33,6 +33,7 @@ const ResumeHeader: React.FC<ResumeHeaderProps> = ({
           onChange={setName}
           className={styles.resumeName}
           placeholder="Your Name"
+          showAIModify={false}
         />
       </h1>
       {showContactInfo && (
@@ -42,6 +43,7 @@ const ResumeHeader: React.FC<ResumeHeaderProps> = ({
             onChange={(value) => updateContact('phone', value)}
             inline={true}
             placeholder="123-456-7890"
+            showAIModify={false}
           />
           <span className={styles.separator}>|</span>
           <div className={styles.contactItem}>
@@ -50,6 +52,7 @@ const ResumeHeader: React.FC<ResumeHeaderProps> = ({
               onChange={(value) => updateContact('email', value)}
               inline={true}
               placeholder="youremail@gmail.com"
+              showAIModify={false}
             />
           </div>
           <span className={styles.separator}>|</span>
@@ -59,6 +62,7 @@ const ResumeHeader: React.FC<ResumeHeaderProps> = ({
               onChange={(value) => updateContact('website', value)}
               inline={true}
               placeholder="yourwebsite.com"
+              showAIModify={false}
             />
           </div>
           <span className={styles.separator}>|</span>
@@ -69,6 +73,7 @@ const ResumeHeader: React.FC<ResumeHeaderProps> = ({
               onChange={(value) => updateContact('linkedin', value)}
               inline={true}
               placeholder="username"
+              showAIModify={false}
             />
           </div>
           <span className={styles.separator}>|</span>
@@ -79,6 +84,7 @@ const ResumeHeader: React.FC<ResumeHeaderProps> = ({
               onChange={(value) => updateContact('github', value)}
               inline={true}
               placeholder="username"
+              showAIModify={false}
             />
           </div>
         </div>

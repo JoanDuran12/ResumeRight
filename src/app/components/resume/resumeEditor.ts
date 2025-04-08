@@ -247,22 +247,51 @@ export const deleteSection = (
   id: string,
   setHistory: Function
 ) => {
-  const beforeState = { ...currentState };
-  
-  const newSections = {
-    ...currentState.sections,
-    [sectionType]: currentState.sections[sectionType].filter((item) => item.id !== id),
-  };
-  
-  const afterState = { ...currentState, sections: newSections };
-  
-  updateHistory(
-    HistoryActionType.DELETE_SECTION,
-    beforeState,
-    afterState,
-    `Deleted ${sectionType} section`,
-    setHistory
-  );
+  try {
+    console.log(`Attempting to delete section of type ${sectionType} with ID: ${id}`);
+    
+    // Check if section type exists in current state
+    if (!currentState.sections || !currentState.sections[sectionType]) {
+      console.error(`Section type ${sectionType} not found in current state`);
+      return;
+    }
+    
+    // Check if section with ID exists
+    const sectionExists = currentState.sections[sectionType].some(item => item.id === id);
+    if (!sectionExists) {
+      console.error(`Section with ID ${id} not found in ${sectionType}`);
+      return;
+    }
+    
+    const beforeState = { ...currentState };
+    
+    // Create new sections with the item filtered out
+    const newSections = {
+      ...currentState.sections,
+      [sectionType]: currentState.sections[sectionType].filter((item) => item.id !== id),
+    };
+    
+    console.log(`Removed section with ID ${id} from ${sectionType}. Section count before: ${currentState.sections[sectionType].length}, after: ${newSections[sectionType].length}`);
+    
+    const afterState = { ...currentState, sections: newSections };
+    
+    // Immediately update the history state to ensure the UI updates
+    setHistory((prev: HistoryState) => ({
+      ...prev,
+      currentState: afterState
+    }));
+    
+    // Then add the event to history
+    updateHistory(
+      HistoryActionType.DELETE_SECTION,
+      beforeState,
+      afterState,
+      `Deleted ${sectionType} section`,
+      setHistory
+    );
+  } catch (error) {
+    console.error('Error in deleteSection:', error);
+  }
 };
 
 /**

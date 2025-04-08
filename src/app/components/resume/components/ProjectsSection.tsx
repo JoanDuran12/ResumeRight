@@ -50,6 +50,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({
           <DeleteSectionButton 
             onClick={() => deleteSection(project.id)} 
             label="Delete project entry"
+            sectionId={project.id}
           />
           <div className={styles.resumeItemHeader}>
             <div className={styles.titleWithButton}>
@@ -59,6 +60,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({
                   onChange={(value) => updateProject(projIndex, 'name', value)} 
                   inline={true}
                   placeholder="Project title"
+                  showAIModify={false}
                 />
               </strong> <span className={styles.separator}>|</span> <span className={styles.resumeProjectTech}>
                 <EditableText 
@@ -67,6 +69,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({
                   className={styles.resumeProjectTech}
                   inline={true}
                   placeholder="Skills used"
+                  showAIModify={false}
                 />
               </span>
               <AddBulletButton onClick={() => addProjectBullet(projIndex)} />
@@ -78,6 +81,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({
                 className={styles.resumeItemDate}
                 inline={true}
                 placeholder="Enter a date"
+                showAIModify={false}
               />
             </div>
           </div>

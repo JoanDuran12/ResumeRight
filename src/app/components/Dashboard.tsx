@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { IconFileText, IconFileUpload, IconPlus } from '@tabler/icons-react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { parsePdf } from '@/app/gemini';
 
 interface DashboardCardProps {
   id: string;
@@ -18,11 +19,39 @@ const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
   
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      console.log("File selected:", file.name);
+    if (!file) return;
+
+    try {
+      setIsImporting(true);
+      setImportError(null);
+      
+      // Create FormData to pass to parsePdf
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Use the parsePdf function to process the PDF
+      const resumeData = await parsePdf(formData);
+      
+      // Save the parsed data to localStorage for the editor to load
+      localStorage.setItem('resumeEditorData', JSON.stringify({
+        currentState: resumeData,
+        savedAt: new Date().toISOString()
+      }));
+      
+      // Navigate to the editor page
+      router.push('/editor');
+    } catch (error) {
+      console.error('Error importing PDF:', error);
+      setImportError(error instanceof Error ? error.message : 'Failed to import PDF');
+    } finally {
+      setIsImporting(false);
+      // Reset the input to allow selecting the same file again
+      if (event.target) event.target.value = '';
     }
   };
 
@@ -39,10 +68,10 @@ const Dashboard: React.FC = () => {
     },
     {
       id: "import-pdf",
-      title: "Import PDF",
-      description: "Upload a new PDF file to your account",
+      title: isImporting ? "Importing..." : "Import PDF",
+      description: importError || "Upload a resume PDF file to edit",
       icon: <IconFileUpload size={64} stroke={1.5} />,
-      action: "Upload",
+      action: isImporting ? "Processing..." : "Upload",
       onClick: () => fileInputRef.current?.click(),
       requiresAuth: false,
       href: ""
@@ -75,7 +104,7 @@ const Dashboard: React.FC = () => {
         type="file"
         ref={fileInputRef}
         onChange={handleFileUpload}
-        accept=".pdf"
+        accept="application/pdf"
         style={{ display: 'none' }}
       />
       
@@ -100,9 +129,9 @@ const Dashboard: React.FC = () => {
               <button 
                 key={card.id}
                 onClick={() => handleCardClick(card)}
-                disabled={card.requiresAuth && !user}
+                disabled={card.requiresAuth && !user || isImporting && card.id === "import-pdf"}
                 className={`group relative w-full bg-[var(--background)] border border-[var(--foreground)] border-opacity-10 overflow-hidden shadow rounded-lg transition duration-200 ${
-                  card.requiresAuth && !user 
+                  (card.requiresAuth && !user) || (isImporting && card.id === "import-pdf")
                     ? 'cursor-not-allowed hover:shadow-none' 
                     : 'cursor-pointer hover:shadow-lg'
                 }`}
@@ -118,7 +147,9 @@ const Dashboard: React.FC = () => {
                     {card.icon}
                   </div>
                   <h3 className="text-center text-lg font-medium text-[var(--foreground)]">{card.title}</h3>
-                  <p className="mt-2 text-center text-sm text-[var(--foreground)] opacity-70">{card.description}</p>
+                  <p className={`mt-2 text-center text-sm ${importError && card.id === "import-pdf" ? "text-red-500" : "text-[var(--foreground)] opacity-70"}`}>
+                    {card.description}
+                  </p>
                 </div>
                 <div className={`bg-[var(--background)] bg-opacity-50 px-4 py-3 border-t border-[var(--foreground)] border-opacity-10 ${card.requiresAuth && !user ? 'opacity-50' : ''}`}>
                   <div 

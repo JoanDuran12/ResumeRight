@@ -59,6 +59,8 @@ import {
 } from './resumeEditor';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { resumeService } from '@/app/services/resumeService';
+import PdfImport from './pdfImport';
+import { parsePdf } from '@/app/gemini';
 
 // Save Dialog component
 interface SaveDialogProps {
@@ -666,7 +668,25 @@ const ResumeEditor: React.FC = () => {
 
   // Section operations
   const handleDeleteSection = (sectionType: 'education' | 'experience' | 'projects' | 'skills', id: string) => {
-    deleteSection(currentState, sectionType, id, setHistory);
+    try {
+      console.log(`[ResumeEditor] Deleting section: ${sectionType}, ID: ${id}`);
+      
+      // Log the section we're trying to delete to verify it exists
+      const sectionToDelete = currentState.sections[sectionType].find(item => item.id === id);
+      if (!sectionToDelete) {
+        console.error(`[ResumeEditor] Cannot find section with ID: ${id} in ${sectionType}`);
+        return;
+      }
+      
+      // Log details about the section for debugging
+      console.log(`[ResumeEditor] Found section to delete:`, sectionToDelete);
+      console.log(`[ResumeEditor] Sections before deletion: ${currentState.sections[sectionType].length}`);
+      
+      // Call the deleteSection function
+      deleteSection(currentState, sectionType, id, setHistory);
+    } catch (error) {
+      console.error('[ResumeEditor] Error in handleDeleteSection:', error);
+    }
   };
 
   const handleDeleteBullet = (sectionType: 'education' | 'experience' | 'projects', sectionId: string, bulletId: string) => {
@@ -1057,13 +1077,60 @@ const ResumeEditor: React.FC = () => {
               )}
             </button>
 
-            <button
-              onClick={() => {}}
-              className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-900 hover:bg-gray-800'} text-white rounded-md px-4 py-1.5 transition-colors`}
+            {/* Import PDF Button */}
+            <input 
+              type="file"
+              id="pdf-upload"
+              accept="application/pdf"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  const formData = new FormData();
+                  formData.append('file', e.target.files[0]);
+                  
+                  // Set states to show loading
+                  const loadingElement = document.getElementById('import-loading-text');
+                  if (loadingElement) loadingElement.style.display = 'inline';
+                  
+                  // Import PDF
+                  parsePdf(formData)
+                    .then(importedState => {
+                      // Update the history with the imported PDF data
+                      const initialEvent = {
+                        type: HistoryActionType.BATCH_UPDATE,
+                        beforeState: history.currentState,
+                        currentState: importedState,
+                        timestamp: Date.now(),
+                        description: 'Imported from PDF'
+                      };
+
+                      setHistory({
+                        events: [...history.events, initialEvent],
+                        currentIndex: history.events.length,
+                        currentState: importedState
+                      });
+                    })
+                    .catch(error => {
+                      console.error("Error importing PDF:", error);
+                      alert("Failed to import PDF: " + (error instanceof Error ? error.message : "Unknown error"));
+                    })
+                    .finally(() => {
+                      // Reset the file input
+                      e.target.value = '';
+                      // Hide loading indicator
+                      if (loadingElement) loadingElement.style.display = 'none';
+                    });
+                }
+              }}
+              className="hidden"
+            />
+            <label 
+              htmlFor="pdf-upload"
+              className={`flex items-center space-x-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-900 hover:bg-gray-800'} text-white rounded-md px-4 py-1.5 transition-colors cursor-pointer`}
             >
               <IconFileUpload size={18} stroke={1.5} />
               <span className="text-sm font-medium">Import PDF</span>
-            </button>
+              <span id="import-loading-text" className="ml-1 animate-pulse" style={{display: 'none'}}>...</span>
+            </label>
             
           </div>
         </div>

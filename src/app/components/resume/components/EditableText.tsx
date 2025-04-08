@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ModifyAIButtonProps from './ModifyAIButtonProps';
+import { RewriteResumeBullet, BulletPointResponse } from '@/app/gemini';
 
 interface EditableTextProps {
   value: string;
@@ -7,6 +9,8 @@ interface EditableTextProps {
   multiline?: boolean;
   inline?: boolean;
   placeholder?: string;
+  onAIModify?: () => void;
+  showAIModify?: boolean | null;
 }
 
 const EditableText: React.FC<EditableTextProps> = ({ 
@@ -15,13 +19,18 @@ const EditableText: React.FC<EditableTextProps> = ({
   className, 
   multiline = false, 
   inline = true,
-  placeholder = ''
+  placeholder = '',
+  onAIModify,
+  showAIModify = true
 }) => {
   const [editing, setEditing] = useState(false);
   const [textWidth, setTextWidth] = useState<number | null>(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const measurementRef = useRef<HTMLSpanElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Resize function for the textarea to match content
   const autoResize = () => {
@@ -80,6 +89,36 @@ const EditableText: React.FC<EditableTextProps> = ({
       setTimeout(measureText, 0);
     }
   }, [editing]);
+  
+  // Handle AI modify click with Gemini API
+  const handleAIModify = async () => {
+    if (!value.trim()) return;
+    
+    try {
+      setIsLoading(true);
+      const result = await RewriteResumeBullet(value);
+      if (result && result.bullet) {
+        onChange(result.bullet);
+      }
+    } catch (error) {
+      console.error("Error modifying text with AI:", error);
+    } finally {
+      setIsLoading(false);
+      // If onAIModify prop is provided, call it as well
+      if (onAIModify) {
+        onAIModify();
+      }
+    }
+  };
+  
+  // Simple hover handling
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+  };
+  
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+  };
   
   if (editing) {
     if (multiline) {
@@ -176,20 +215,68 @@ const EditableText: React.FC<EditableTextProps> = ({
   return (
     <>
       <div 
-        ref={textRef}
-        onClick={() => setEditing(true)} 
-        className={className} 
+        ref={containerRef}
         style={{ 
-          cursor: 'pointer',
-          display: inline ? 'inline-block' : 'block',
-          wordWrap: 'break-word',
-          whiteSpace: 'pre-wrap',
-          padding: '2px',
-          minWidth: value ? 'auto' : '50px'
+          position: 'relative', 
+          display: inline ? 'inline-flex' : 'flex', 
+          alignItems: 'center'
         }}
       >
-        {value || (placeholder && <span style={{ color: '#999' }}>{placeholder}</span>)}
+        {/* Invisible generous hit area */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '-10px',
+            right: '-60px',
+            bottom: '-10px',
+            left: '-10px',
+            zIndex: 1,
+            cursor: 'pointer',
+          }}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        />
+        
+        <div 
+          ref={textRef}
+          onClick={() => setEditing(true)} 
+          className={className} 
+          style={{ 
+            cursor: 'pointer',
+            display: inline ? 'inline-block' : 'block',
+            wordWrap: 'break-word',
+            whiteSpace: 'pre-wrap',
+            padding: '2px',
+            minWidth: value ? 'auto' : '50px',
+            position: 'relative',
+            zIndex: 2
+          }}
+        >
+          {value || (placeholder && <span style={{ color: '#999' }}>{placeholder}</span>)}
+        </div>
+        
+        {isHovering && showAIModify && (
+          <div 
+            style={{ 
+              position: 'absolute', 
+              left: '100%', 
+              top: '50%', 
+              transform: 'translateY(-50%)',
+              marginLeft: '1em',
+              zIndex: 2
+            }}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
+            <ModifyAIButtonProps 
+              onClick={handleAIModify} 
+              label="Modify bullet with AI" 
+              isLoading={isLoading}
+            />
+          </div>
+        )}
       </div>
+      
       {/* Hidden span for text measurement */}
       <span
         ref={measurementRef}

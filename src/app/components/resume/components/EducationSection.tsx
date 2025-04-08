@@ -44,6 +44,7 @@ const EducationSection: React.FC<EducationSectionProps> = ({
           <DeleteSectionButton 
             onClick={() => deleteSection(education.id)} 
             label="Delete education entry"
+            sectionId={education.id}
           />
           <div className={styles.resumeItemHeader}>
             <EditableText
@@ -51,6 +52,7 @@ const EducationSection: React.FC<EducationSectionProps> = ({
               onChange={(value) => updateEducation(eduIndex, 'school', value)}
               className={styles.resumeItemTitle}
               placeholder="Name of institution"
+              showAIModify={false}
             />
             <EditableText
               value={education.dates}
@@ -58,6 +60,7 @@ const EducationSection: React.FC<EducationSectionProps> = ({
               className={styles.resumeItemLocation}
               inline={true}
               placeholder="Enter a date"
+              showAIModify={false}
             />
           </div>
           <div className={styles.resumeItemSubheader}>
@@ -66,6 +69,7 @@ const EducationSection: React.FC<EducationSectionProps> = ({
               onChange={(value) => updateEducation(eduIndex, 'degree', value)}
               className={styles.resumeItemOrg}
               placeholder="Degree"
+              showAIModify={false}
             />
             <EditableText
               value={education.location}
@@ -73,6 +77,7 @@ const EducationSection: React.FC<EducationSectionProps> = ({
               className={styles.resumeItemDate}
               inline={true}
               placeholder="Location"
+              showAIModify={false}
             />
           </div>
           <div className={styles.skillRow}>
@@ -82,6 +87,7 @@ const EducationSection: React.FC<EducationSectionProps> = ({
               className={styles.resumeSkillsCategory}
               placeholder="Category"
               inline={true}
+              showAIModify={false}
             />
             <span>: </span>
             <EditableText
@@ -90,6 +96,7 @@ const EducationSection: React.FC<EducationSectionProps> = ({
               className={styles.resumeSkillsList}
               placeholder="Key skills"
               inline={true}
+              showAIModify={false}
             />
           </div>
         </div>

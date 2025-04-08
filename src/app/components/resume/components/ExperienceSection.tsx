@@ -51,6 +51,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
           <DeleteSectionButton 
             onClick={() => deleteSection(experience.id)} 
             label="Delete experience entry"
+            sectionId={experience.id}
           />
           <div className={styles.resumeItemHeader}>
             <div className={styles.titleWithButton}>
@@ -59,6 +60,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                 onChange={(value) => updateExperience(expIndex, 'title', value)}
                 className={styles.resumeItemTitle}
                 placeholder="Job Position"
+                showAIModify={false}
               />
               <AddBulletButton onClick={() => addExperienceBullet(expIndex)} />
             </div>
@@ -68,6 +70,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
               className={styles.resumeItemDate}
               inline={true}
               placeholder="Enter a date"
+              showAIModify={false}
             />
           </div>
           <div className={styles.resumeItemSubheader}>
@@ -76,6 +79,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
               onChange={(value) => updateExperience(expIndex, 'organization', value)}
               className={styles.resumeItemOrg}
               placeholder="Company Name"
+              showAIModify={false}
             />
             <EditableText
               value={experience.location}
@@ -83,6 +87,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
               className={styles.resumeItemLocation}
               inline={true}
               placeholder="Location"
+              showAIModify={false}
             />
           </div>
           <ul className={styles.resumeBullets}>

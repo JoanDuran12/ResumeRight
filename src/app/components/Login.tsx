@@ -50,34 +50,16 @@ export default function Login() {
         
         try {
             console.log("Calling signInWithGoogle function");
-            const success = await signInWithGoogle();
-            console.log("Sign-in function completed", success ? "successfully" : "unsuccessfully");
-            
-            if (!success) {
-                // Don't show error for user-cancelled operations
-                console.log("Sign-in was not successful, but no error occurred (likely user cancelled)");
-            }
+            await signInWithGoogle();
+            console.log("Sign-in function completed");
         } catch (error: any) {
             console.error("Google sign-in failed with error:", error);
-            
-            // Handle different error codes with user-friendly messages
-            if (error.code === 'auth/popup-blocked') {
-                setAuthError("Your browser blocked the login popup. Please allow popups for this site and try again.");
-            } else if (error.code === 'auth/cancelled-popup-request') {
-                // This is handled in the config file, but as a fallback:
-                console.log("A popup is already open");
-            } else if (error.code === 'auth/popup-closed-by-user') {
-                // User closed the popup, don't show error
-                console.log("User closed the login popup");
-            } else {
-                setAuthError(error.message || "Failed to sign in with Google. Please try again later.");
-            }
+            setAuthError(error.message || "Failed to sign in with Google");
         }
     };
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
-            
             <div className="w-full max-w-md">
                 <div className="flex flex-col items-center space-y-10">
                     <div className="flex items-center justify-center">
