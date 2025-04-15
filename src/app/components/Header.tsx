@@ -1,6 +1,11 @@
-'use client'
+"use client";
 
-import { IconSun, IconMoon, IconDownload, IconDeviceFloppy } from "@tabler/icons-react";
+import {
+  IconSun,
+  IconMoon,
+  IconDownload,
+  IconDeviceFloppy,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useState, useRef, useEffect } from "react";
@@ -11,7 +16,7 @@ import { usePathname } from "next/navigation";
 const navItems = [
   {
     title: "Features",
-    href: "/#Features",
+    href: "#features",
   },
   {
     title: "GitHub",
@@ -24,38 +29,42 @@ const navItems = [
   },
 ];
 
-
 function Header() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  
+
   // Check if we're on the editor page
-  const isEditorPage = pathname === "/editor" || pathname?.startsWith("/editor/");
-  
+  const isEditorPage =
+    pathname === "/editor" || pathname?.startsWith("/editor/");
+
   // Check if we're on the landing page
-  const isLandingPage = pathname === "/" || pathname === "";
-  
+  const isLandingPage =
+    pathname === "/" || pathname === "" || pathname === "/faq";
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !(dropdownRef.current as HTMLElement).contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !(dropdownRef.current as HTMLElement).contains(event.target as Node)
+      ) {
         setDropdownOpen(false);
       }
     };
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-  
+
   const handleSignOut = () => {
     logout();
     setDropdownOpen(false);
   };
-  
+
   return (
     <div className="w-full pt-4 px-4 sticky top-0 z-50">
       <header className="max-w-7xl mx-auto bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 border border-gray-200 dark:border-gray-800 rounded-lg px-6 py-3">
@@ -75,7 +84,7 @@ function Header() {
               <span className="font-bold text-xl">ResumeRight</span>
             </Link>
           </div>
-          
+
           {/* Navigation Items - Shown only on landing page */}
           {isLandingPage && (
             <nav className="hidden md:flex items-center gap-6">
@@ -84,26 +93,29 @@ function Header() {
                   key={index}
                   href={item.href}
                   target={item.target}
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="text-sm font-medium text-dark hover:underline transition-colors"
                 >
                   {item.title}
                 </Link>
               ))}
             </nav>
           )}
-          
+
           {/* Right Side - User Controls */}
           <div className="flex items-center gap-3">
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? (
+              {theme === "dark" ? (
                 <IconSun size={20} className="text-yellow-500" />
               ) : (
-                <IconMoon size={20} className="text-gray-700" />
+                <IconMoon
+                  size={20}
+                  className="text-gray-700 group-hover:text-white transition-colors"
+                />
               )}
             </button>
 
@@ -115,37 +127,39 @@ function Header() {
                   </div>
                 </Link>
                 <div className="relative" ref={dropdownRef}>
-                  <button 
+                  <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     className="flex items-center"
                   >
                     <div className="overflow-hidden rounded-lg w-10 h-10 border border-gray-200 hover:border-gray-300 transition-colors">
                       {user.photoURL ? (
-                        <img 
-                          src={user.photoURL} 
-                          alt="Profile" 
+                        <img
+                          src={user.photoURL}
+                          alt="Profile"
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-800 flex items-center justify-center text-white">
-                          {user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
+                          {user.displayName
+                            ? user.displayName.charAt(0).toUpperCase()
+                            : "U"}
                         </div>
                       )}
                     </div>
                   </button>
-                  
+
                   {dropdownOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
-                      <Link 
-                        href="/user" 
+                      <Link
+                        href="/user"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         onClick={() => setDropdownOpen(false)}
                       >
                         Profile Settings
                       </Link>
                       <Link href="/">
-                        <button 
+                        <button
                           onClick={handleSignOut}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         >
@@ -158,13 +172,13 @@ function Header() {
               </>
             ) : (
               <>
-                <Link 
+                <Link
                   href="/login"
-                  className="px-5 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors hidden sm:flex"
+                  className="px-5 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-white transition-colors hidden sm:flex"
                 >
                   Sign in
                 </Link>
-                
+
                 <Link href="/homepage">
                   <div className="bg-gray-900 hover:bg-gray-800 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors">
                     Get Started
@@ -174,7 +188,7 @@ function Header() {
             )}
           </div>
         </div>
-        
+
         {/* Mobile navigation for landing page - shows below header */}
         {isLandingPage && (
           <nav className="md:hidden flex items-center justify-center gap-4 pt-3 mt-2 border-t border-gray-200 dark:border-gray-700">

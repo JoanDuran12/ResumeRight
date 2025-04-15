@@ -63,7 +63,7 @@ export default function FAQPage() {
   return (
     <>
       <Header />
-      <div className="pt-8 pb-4 px-4">
+      <div className="pt-20 pb-4 px-4">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold text-center mb-2">Frequently Asked Questions</h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 text-center mb-8">
@@ -75,7 +75,7 @@ export default function FAQPage() {
         faqItems={extendedFAQs} 
         title="" 
         subtitle="" 
-        className="pt-0"
+        className="pt-2"
       />
       <Footer />
     </>

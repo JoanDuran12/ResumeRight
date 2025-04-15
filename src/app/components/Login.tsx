@@ -60,10 +60,9 @@ export default function Login() {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-md border border-gray-300 bg-white rounded-lg shadow-md p-6">
                 <div className="flex flex-col items-center space-y-10">
                     <div className="flex items-center justify-center">
-                        <IconFileDescription stroke={2} className="size-8 mr-3" />
                         <h1 className="text-3xl font-bold">Welcome to ResumeRight</h1>
                     </div>
                     

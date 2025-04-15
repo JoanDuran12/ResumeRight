@@ -86,8 +86,8 @@ export default function FAQ({
     <section id="FAQ" className={`py-16 px-4 bg-gray-50 dark:bg-gray-900 ${className}`}>
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">{title}</h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
+          <h2 className="text-3xl font-bold mb-4 text-white">{title}</h2>
+          <p className="text-lg text-white dark:text-gray-400">
             {subtitle}
           </p>
         </div>
