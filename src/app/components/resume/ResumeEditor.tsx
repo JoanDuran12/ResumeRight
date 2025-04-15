@@ -56,11 +56,33 @@ import {
   getHistoryStats,
   getRecentActions,
   saveResume,
+  resetIdCounter,
 } from './resumeEditor';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { resumeService } from '@/app/services/resumeService';
 import PdfImport from './pdfImport';
-import { parsePdf } from '@/app/gemini';
+import { parsePdf, importPdf, checkIfResume } from '@/app/gemini';
+import { toast, Toaster } from 'react-hot-toast';
+
+// Custom toast component with blur background
+const CustomToast = ({ message, type = 'success', onClose }) => {
+  return (
+    <div className="flex items-center bg-white bg-opacity-90 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg p-4 max-w-md">
+      <div className={`mr-3 text-2xl ${type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
+        {type === 'error' ? '⚠️' : '✅'}
+      </div>
+      <div className="flex-1 mr-2">
+        <p className="text-gray-800">{message}</p>
+      </div>
+      <button 
+        onClick={onClose} 
+        className="text-gray-500 hover:text-gray-700"
+      >
+        <IconX size={18} />
+      </button>
+    </div>
+  );
+};
 
 // Save Dialog component
 interface SaveDialogProps {
@@ -86,8 +108,8 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
   saveStatus = null,
   errorMessage = ''
 }) => {
-  const [resumeName, setResumeName] = useState(initialName || '');
   const { theme } = useTheme();
+  const [resumeName, setResumeName] = useState<string>(initialName || '');
 
   useEffect(() => {
     if (isOpen && initialName) {
@@ -438,6 +460,38 @@ const OptionsDropdown: React.FC<OptionsDropdownProps> = ({
   );
 };
 
+interface ValidationErrorDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  errorMessage: string;
+}
+
+const ValidationErrorDialog: React.FC<ValidationErrorDialogProps> = ({ 
+  isOpen, 
+  onClose,
+  errorMessage
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
+      <div className="bg-white p-6 rounded-lg shadow-xl z-10 w-96 max-w-full">
+        <h2 className="text-xl font-semibold mb-4">Invalid Resume</h2>
+        <p className="mb-6 text-gray-700">{errorMessage}</p>
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ResumeEditor: React.FC = () => {
   const { theme } = useTheme();
   const { user } = useAuth();
@@ -576,8 +630,14 @@ const ResumeEditor: React.FC = () => {
 
   const handleClearResume = () => {
     if (window.confirm('Are you sure you want to clear all resume data? This action cannot be undone.')) {
-      setHistory(getInitialHistoryState()); // Reset to initial history state
-      clearLocalStorage(); // Clear storage as well
+      // Reset the ID counter for fresh deterministic IDs
+      resetIdCounter();
+      
+      // Reset to initial history state
+      setHistory(getInitialHistoryState()); 
+      
+      // Clear storage as well
+      clearLocalStorage();
     }
   };
 
@@ -847,15 +907,16 @@ const ResumeEditor: React.FC = () => {
       const existingResume = userResumes.find(r => r.title.toLowerCase() === resumeName.toLowerCase());
       
       if (existingResume) {
-        // Store the resume ID for potential overwrite
-        setResumeId(existingResume.id);
+        // Store the resume name for confirmation, but DON'T set resumeId yet
         setResumeToCheck(resumeName);
+        // Store the existing resume ID temporarily without setting it as the current resumeId
+        // We'll use this only if the user confirms the overwrite
         setShowSaveDialog(false);
         setShowOverwriteConfirm(true);
       } else {
         // No conflict, proceed with save
         setIsSaving(true); // Only now set isSaving to true
-        proceedWithSave(resumeName);
+        proceedWithSave(resumeName, null); // Pass null to create a new resume
       }
     } catch (error) {
       console.error('Error checking existing resumes:', error);
@@ -866,13 +927,10 @@ const ResumeEditor: React.FC = () => {
   };
 
   // Proceed with actual save operation
-  const proceedWithSave = async (resumeTitle) => {
+  const proceedWithSave = async (resumeTitle, idToUse = resumeId) => {
     try {
-      // Don't update the name in current state - keep them separate
-      // We're only saving the resume with this title, not changing the person's name
-
       // Save to Firebase
-      const savedResumeId = await saveResume(history.currentState, resumeId, resumeTitle);
+      const savedResumeId = await saveResume(history.currentState, idToUse, resumeTitle);
       setResumeId(savedResumeId);
       
       // Show success status
@@ -898,7 +956,24 @@ const ResumeEditor: React.FC = () => {
   const handleOverwriteConfirm = async (resumeName) => {
     // Now set isSaving to true since user confirmed
     setIsSaving(true);
-    await proceedWithSave(resumeName);
+    
+    // Get the ID of the resume to overwrite
+    try {
+      const userResumes = await resumeService.getUserResumes(user.uid);
+      const existingResume = userResumes.find(r => r.title.toLowerCase() === resumeName.toLowerCase());
+      
+      if (existingResume) {
+        await proceedWithSave(resumeName, existingResume.id);
+      } else {
+        // If resume not found (rare case), create a new one
+        await proceedWithSave(resumeName, null);
+      }
+    } catch (error) {
+      console.error('Error finding resume to overwrite:', error);
+      setSaveStatus('error');
+      setSaveErrorMessage('Error finding resume to overwrite: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      setIsSaving(false);
+    }
   };
 
   // Add handler for login button
@@ -982,9 +1057,104 @@ const ResumeEditor: React.FC = () => {
     }
   };
 
+  // Add this state for validation error handling
+  const [showValidationError, setShowValidationError] = useState(false);
+  const [validationErrorMessage, setValidationErrorMessage] = useState('');
+  
+  // Update the import PDF functionality to check if it's a valid resume first
+  const handleImportPDF = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      
+      // Create form data for the file
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      try {
+        // Set states to show loading
+        const loadingElement = document.getElementById('import-loading-text');
+        if (loadingElement) loadingElement.style.display = 'inline';
+        
+        // First check if it's a valid resume
+        const validationResult = await checkIfResume(formData);
+        
+        if (!validationResult.isValid) {
+          // Show validation error dialog
+          setValidationErrorMessage(validationResult.error || "This file does not appear to be a valid resume.");
+          setShowValidationError(true);
+          
+          // Reset the file input and hide loading
+          event.target.value = '';
+          if (loadingElement) loadingElement.style.display = 'none';
+          return;
+        }
+        
+        // If valid, proceed with import
+        const importedState = await parsePdf(formData);
+        
+        // Update the history with the imported PDF data
+        const initialEvent = {
+          type: HistoryActionType.BATCH_UPDATE,
+          beforeState: history.currentState,
+          currentState: importedState,
+          timestamp: Date.now(),
+          description: 'Imported from PDF'
+        };
+        
+        setHistory({
+          events: [...history.events, initialEvent],
+          currentIndex: history.events.length,
+          currentState: importedState
+        });
+        
+        // Show success toast with custom component
+        toast.custom((t) => (
+          <CustomToast 
+            message="Resume imported successfully!"
+            type="success"
+            onClose={() => toast.dismiss(t.id)}
+          />
+        ), { duration: 3000 });
+      } catch (error) {
+        console.error('Error importing PDF:', error);
+        // Show validation error dialog for any other errors
+        setValidationErrorMessage(error instanceof Error ? error.message : "Failed to import the resume.");
+        setShowValidationError(true);
+      } finally {
+        // Reset the file input
+        event.target.value = '';
+        // Hide loading indicator
+        const loadingElement = document.getElementById('import-loading-text');
+        if (loadingElement) loadingElement.style.display = 'none';
+      }
+    }
+  };
+
+  // Ensure deterministic IDs for skills to prevent hydration mismatch
+  useEffect(() => {
+    // This runs only on the client after hydration
+    if (typeof window !== 'undefined') {
+      // No need to modify anything, just let client-side rendering complete
+      // The deterministic ID generation in resumeEditor.ts will take care of future IDs
+      console.log('ResumeEditor mounted on client');
+    }
+  }, []);
+
   // --- JSX ---
   return (
     <div className="flex flex-col">
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          duration: 5000,
+          style: {
+            background: 'transparent',
+            boxShadow: 'none',
+            padding: 0,
+          },
+        }}
+      />
+      
       {/* Header Controls Bar */}
       <div className={`w-full ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-b shadow-sm sticky top-0 z-10 py-3 px-4`}>
         <div className="max-w-7xl mx-auto flex justify-between items-center">
@@ -1082,45 +1252,7 @@ const ResumeEditor: React.FC = () => {
               type="file"
               id="pdf-upload"
               accept="application/pdf"
-              onChange={(e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                  const formData = new FormData();
-                  formData.append('file', e.target.files[0]);
-                  
-                  // Set states to show loading
-                  const loadingElement = document.getElementById('import-loading-text');
-                  if (loadingElement) loadingElement.style.display = 'inline';
-                  
-                  // Import PDF
-                  parsePdf(formData)
-                    .then(importedState => {
-                      // Update the history with the imported PDF data
-                      const initialEvent = {
-                        type: HistoryActionType.BATCH_UPDATE,
-                        beforeState: history.currentState,
-                        currentState: importedState,
-                        timestamp: Date.now(),
-                        description: 'Imported from PDF'
-                      };
-
-                      setHistory({
-                        events: [...history.events, initialEvent],
-                        currentIndex: history.events.length,
-                        currentState: importedState
-                      });
-                    })
-                    .catch(error => {
-                      console.error("Error importing PDF:", error);
-                      alert("Failed to import PDF: " + (error instanceof Error ? error.message : "Unknown error"));
-                    })
-                    .finally(() => {
-                      // Reset the file input
-                      e.target.value = '';
-                      // Hide loading indicator
-                      if (loadingElement) loadingElement.style.display = 'none';
-                    });
-                }
-              }}
+              onChange={handleImportPDF}
               className="hidden"
             />
             <label 
@@ -1275,6 +1407,13 @@ const ResumeEditor: React.FC = () => {
           onToggleSection={toggleSection}
         />
       )}
+
+      {/* Validation Error Dialog */}
+      <ValidationErrorDialog
+        isOpen={showValidationError}
+        onClose={() => setShowValidationError(false)}
+        errorMessage={validationErrorMessage}
+      />
     </div>
   );
 };

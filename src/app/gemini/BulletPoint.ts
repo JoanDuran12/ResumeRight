@@ -30,36 +30,53 @@ const getJobDescription = (): string => {
  */
 export async function RewriteResumeBullet(bulletPoint: string): Promise<BulletPointResponse> {
   const jobDescription = getJobDescription();
+  const hasJobDescription = jobDescription.trim().length > 0;
   
   const prompt = `
-    You will rewrite the following resume bullet point to be more impactful to the job the user is applying to.
-
-    Job description: "${jobDescription}"
+    You are an expert resume writer with years of experience helping job seekers land interviews.
     
-    Original bullet point: "${bulletPoint}" Use it as reference only not to add on it.
+    Your task is to transform the following resume bullet point into a high-impact achievement statement${hasJobDescription ? " that perfectly aligns with the target job description" : ""}.
+
+    ${hasJobDescription ? `TARGET JOB DESCRIPTION:
+    """
+    ${jobDescription}
+    """
+    ` : "No job description provided. Focus on creating a universally strong bullet point that highlights impact and achievements."}
+    
+    ORIGINAL BULLET POINT:
+    """
+    ${bulletPoint}
+    """
+    
+    GUIDELINES FOR TRANSFORMATION:
+    1. Begin with a strong action verb in the past tense
+    2. Emphasize measurable outcomes and quantifiable achievements wherever possible (add realistic metrics if none exist)
+    3. Follow the PAR formula: Problem/Project → Action → Result
+    4. Demonstrate impact using metrics, percentages, or specific improvements
+    5. Highlight relevant skills and technologies${hasJobDescription ? " that align with the job description" : ""}
+    6. Remove filler words and unnecessary details
+    7. Be concise and impactful - limit to 1-2 sentences with no periods at the end
+    ${hasJobDescription ? "8. Incorporate relevant keywords from the job description naturally" : ""}
     
     Generate your response following exactly this JSON schema with no additional text:
     {
-      "bullet": "A rewritten version that is more impactful, quantifiable, and achievement-focused",
+      "bullet": "The transformed high-impact resume bullet"
     }
     
-    Limitations:
-    - The rewritten bullet point should be tailored to the job description provided.
-    - It should be more impactful, quantifiable, and achievement-focused.
-    - 2 sentences max and keep it concise.
-    - Use short and clear sentences.
-    - Avoid using examples or explanations.
-    - DO NOT include any final periods to sentences.
-
-
-    Important: Return ONLY valid JSON that matches this schema with no explanation or markdown formatting.
+    IMPORTANT: 
+    - Return ONLY valid JSON matching this schema with no explanation or markdown
+    - Never exceed 2 sentences
+    - Never include final periods
+    - Use concrete, specific language
+    - Focus on achievements rather than responsibilities
   `;
 
   try {
     const result = await model.generateContent({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: {
-        temperature: 0.7,
+        temperature: 0.6,
+        maxOutputTokens: 200,
       },
       safetySettings: [
         {

@@ -131,6 +131,28 @@ export interface HistoryState {
   currentState: AppState;
 }
 
+// Counter to help create unique IDs
+export let idCounter = 0;
+
+/**
+ * Resets the ID counter to ensure fresh deterministic IDs
+ */
+export function resetIdCounter() {
+  idCounter = 0;
+}
+
+/**
+ * Generate a deterministic ID based on existing items
+ * This replaces crypto.randomUUID() for server-side rendering compatibility
+ */
+function generateDeterministicId(prefix: string, items: any[], salt: string = ''): string {
+  // Use a counter instead of timestamp to ensure deterministic IDs
+  idCounter += 1;
+  const itemCount = items.length;
+  // Create a predictable but unique ID
+  return `${prefix}-${itemCount}-${idCounter}-${salt}`;
+}
+
 /**
  * Creates a history event with before and after states
  */
@@ -341,32 +363,49 @@ export const addBullet = (
   sectionId: string,
   setHistory: Function
 ) => {
-  if (sectionType === 'education') return; // Education no longer has bullets
-  
-  const beforeState = { ...currentState };
-  
-  const newSections = {
-    ...currentState.sections,
-    [sectionType]: currentState.sections[sectionType].map((section) => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          bullets: [...section.bullets, { id: crypto.randomUUID(), text: '' }],
-        };
-      }
-      return section;
-    }),
-  };
-  
-  const afterState = { ...currentState, sections: newSections };
-  
-  updateHistory(
-    HistoryActionType.ADD_BULLET,
-    beforeState,
-    afterState,
-    `Added bullet to ${sectionType}`,
-    setHistory
-  );
+  try {
+    const beforeState = { ...currentState };
+    
+    const sectionIndex = currentState.sections[sectionType].findIndex(section => section.id === sectionId);
+    
+    if (sectionIndex === -1) {
+      console.error(`Section not found with ID: ${sectionId}`);
+      return;
+    }
+    
+    const section = currentState.sections[sectionType][sectionIndex];
+    const newBullets = [...section.bullets];
+    
+    newBullets.push({
+      id: generateDeterministicId('bullet', section.bullets, sectionId),
+      text: ''
+    });
+    
+    const newSections = {
+      ...currentState.sections,
+      [sectionType]: currentState.sections[sectionType].map((section, index) => {
+        if (index === sectionIndex) {
+          return {
+            ...section,
+            bullets: newBullets
+          };
+        }
+        return section;
+      })
+    };
+    
+    const afterState = { ...currentState, sections: newSections };
+    
+    updateHistory(
+      HistoryActionType.ADD_BULLET,
+      beforeState,
+      afterState,
+      'Added bullet point',
+      setHistory
+    );
+  } catch (error) {
+    console.error('[addBullet] Error adding bullet:', error);
+  }
 };
 
 /**
@@ -377,7 +416,11 @@ export const addSkillCategory = (currentState: AppState, setHistory: Function) =
   
   const newSections = {
     ...currentState.sections,
-    skills: [...currentState.sections.skills, { id: crypto.randomUUID(), category: '', skills: '' }],
+    skills: [...currentState.sections.skills, { 
+      id: generateDeterministicId('skill', currentState.sections.skills), 
+      category: '', 
+      skills: '' 
+    }],
   };
   
   const afterState = { ...currentState, sections: newSections };
@@ -404,33 +447,35 @@ export const addSection = (
   let newSpecificSection;
 
   if (sectionType === 'projects') {
+    const sectionId = generateDeterministicId('project', currentState.sections.projects);
     newSpecificSection = {
-      id: crypto.randomUUID(),
+      id: sectionId,
       name: '',
       tech: '',
       dates: '',
       bullets: [
-        { id: crypto.randomUUID(), text: '' },
-        { id: crypto.randomUUID(), text: '' },
-        { id: crypto.randomUUID(), text: '' },
+        { id: generateDeterministicId('bullet', [], `${sectionId}-1`), text: '' },
+        { id: generateDeterministicId('bullet', [], `${sectionId}-2`), text: '' },
+        { id: generateDeterministicId('bullet', [], `${sectionId}-3`), text: '' },
       ],
     };
   } else if (sectionType === 'experience') {
+    const sectionId = generateDeterministicId('exp', currentState.sections.experience);
     newSpecificSection = {
-      id: crypto.randomUUID(),
+      id: sectionId,
       title: '',
       organization: '',
       location: '',
       dates: '',
       bullets: [
-        { id: crypto.randomUUID(), text: '' },
-        { id: crypto.randomUUID(), text: '' },
-        { id: crypto.randomUUID(), text: '' },
+        { id: generateDeterministicId('bullet', [], `${sectionId}-1`), text: '' },
+        { id: generateDeterministicId('bullet', [], `${sectionId}-2`), text: '' },
+        { id: generateDeterministicId('bullet', [], `${sectionId}-3`), text: '' },
       ],
     };
   } else {
     newSpecificSection = {
-      id: crypto.randomUUID(),
+      id: generateDeterministicId('edu', currentState.sections.education),
       school: '',
       degree: '',
       location: '',
@@ -783,24 +828,24 @@ export const getInitialHistoryState = (): HistoryState => {
         id: 'initial-exp-1',
         title: '', organization: '', location: '', dates: '',
         bullets: [
-          { id: crypto.randomUUID(), text: '' },
-          { id: crypto.randomUUID(), text: '' },
-          { id: crypto.randomUUID(), text: '' }
+          { id: 'initial-exp-1-bullet-1', text: '' },
+          { id: 'initial-exp-1-bullet-2', text: '' },
+          { id: 'initial-exp-1-bullet-3', text: '' }
         ]
       }],
       projects: [{
         id: 'initial-proj-1',
         name: '', tech: '', dates: '',
         bullets: [
-          { id: crypto.randomUUID(), text: '' },
-          { id: crypto.randomUUID(), text: '' },
-          { id: crypto.randomUUID(), text: '' }
+          { id: 'initial-proj-1-bullet-1', text: '' },
+          { id: 'initial-proj-1-bullet-2', text: '' },
+          { id: 'initial-proj-1-bullet-3', text: '' }
         ]
       }],
       skills: [
-        { id: crypto.randomUUID(), category: '', skills: '' },
-        { id: crypto.randomUUID(), category: '', skills: '' },
-        { id: crypto.randomUUID(), category: '', skills: '' }
+        { id: 'initial-skill-1', category: '', skills: '' },
+        { id: 'initial-skill-2', category: '', skills: '' },
+        { id: 'initial-skill-3', category: '', skills: '' }
       ],
       additionalTitle: 'Additional',
       educationTitle: 'Education',

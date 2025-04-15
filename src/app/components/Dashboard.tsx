@@ -1,8 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { IconFileText, IconFileUpload, IconPlus } from '@tabler/icons-react';
+import { IconFileText, IconFileUpload, IconPlus, IconX } from '@tabler/icons-react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { parsePdf } from '@/app/gemini';
+import { parsePdf, checkIfResume } from '@/app/gemini';
+import { toast, Toaster } from 'react-hot-toast';
 
 interface DashboardCardProps {
   id: string;
@@ -14,6 +15,26 @@ interface DashboardCardProps {
   requiresAuth: boolean;
   href: string;
 }
+
+// Custom toast component with blur background
+const CustomToast = ({ message, type = 'error', onClose }) => {
+  return (
+    <div className="flex items-center bg-white bg-opacity-90 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg p-4 max-w-md">
+      <div className={`mr-3 text-2xl ${type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
+        {type === 'error' ? '⚠️' : '✅'}
+      </div>
+      <div className="flex-1 mr-2">
+        <p className="text-gray-800">{message}</p>
+      </div>
+      <button 
+        onClick={onClose} 
+        className="text-gray-500 hover:text-gray-700"
+      >
+        <IconX size={18} />
+      </button>
+    </div>
+  );
+};
 
 const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
@@ -30,11 +51,32 @@ const Dashboard: React.FC = () => {
       setIsImporting(true);
       setImportError(null);
       
-      // Create FormData to pass to parsePdf
+      // Create FormData to pass to validation and parsePdf
       const formData = new FormData();
       formData.append('file', file);
       
-      // Use the parsePdf function to process the PDF
+      // First validate that the file is a resume
+      const validationResult = await checkIfResume(formData);
+      
+      if (!validationResult.isValid) {
+        // Show error toast with custom component
+        toast.custom((t) => (
+          <CustomToast 
+            message={validationResult.error || "This file doesn't appear to be a resume."} 
+            type="error"
+            onClose={() => toast.dismiss(t.id)}
+          />
+        ), { duration: 5000 });
+        
+        setImportError(validationResult.error || "This file doesn't appear to be a resume.");
+        setIsImporting(false);
+        
+        // Reset the input to allow selecting the same file again
+        if (event.target) event.target.value = '';
+        return;
+      }
+      
+      // If valid, use the parsePdf function to process the PDF
       const resumeData = await parsePdf(formData);
       
       // Save the parsed data to localStorage for the editor to load
@@ -43,10 +85,29 @@ const Dashboard: React.FC = () => {
         savedAt: new Date().toISOString()
       }));
       
+      // Show success toast
+      toast.custom((t) => (
+        <CustomToast 
+          message="Resume imported successfully!" 
+          type="success"
+          onClose={() => toast.dismiss(t.id)}
+        />
+      ), { duration: 3000 });
+      
       // Navigate to the editor page
       router.push('/editor');
     } catch (error) {
       console.error('Error importing PDF:', error);
+      
+      // Show error toast
+      toast.custom((t) => (
+        <CustomToast 
+          message={error instanceof Error ? error.message : 'Failed to import PDF'} 
+          type="error"
+          onClose={() => toast.dismiss(t.id)}
+        />
+      ), { duration: 5000 });
+      
       setImportError(error instanceof Error ? error.message : 'Failed to import PDF');
     } finally {
       setIsImporting(false);
@@ -106,6 +167,19 @@ const Dashboard: React.FC = () => {
         onChange={handleFileUpload}
         accept="application/pdf"
         style={{ display: 'none' }}
+      />
+      
+      {/* Toaster for showing notifications */}
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          duration: 5000,
+          style: {
+            background: 'transparent',
+            boxShadow: 'none',
+            padding: 0,
+          },
+        }}
       />
       
       {/* Main Content */}

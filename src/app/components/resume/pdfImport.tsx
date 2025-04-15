@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { parsePdf } from '@/app/gemini';
+import { parsePdf, checkIfResume } from '@/app/gemini';
 import { AppState } from './resumeEditor';
 import { IconFileUpload } from '@tabler/icons-react';
 
@@ -31,6 +31,16 @@ export default function PdfImport({ onImportComplete }: PdfImportProps) {
     setIsLoading(true);
     
     try {
+      // First validate that the PDF is a resume
+      const validationResult = await checkIfResume(formData);
+      
+      if (!validationResult.isValid) {
+        // If not a valid resume, show the error
+        setError(validationResult.error || "The uploaded file doesn't appear to be a valid resume.");
+        return;
+      }
+      
+      // If valid, proceed with parsing
       const appState = await parsePdf(formData);
       onImportComplete(appState);
     } catch (error) {
@@ -38,6 +48,8 @@ export default function PdfImport({ onImportComplete }: PdfImportProps) {
       setError(error instanceof Error ? error.message : "Failed to import PDF");
     } finally {
       setIsLoading(false);
+      // Reset the file input
+      e.target.value = '';
     }
   };
   

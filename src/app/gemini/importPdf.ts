@@ -35,6 +35,140 @@ export async function isPdf(file: File): Promise<boolean> {
 }
 
 /**
+ * Validation results for PDF resume checks
+ */
+export interface PdfValidationResult {
+  isValid: boolean;
+  error?: string;
+}
+
+/**
+ * Checks if the provided PDF is a valid resume with appropriate length
+ */
+export async function validateResumePdf(file: File): Promise<PdfValidationResult> {
+  try {
+    // Check file size (limit to 10MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        isValid: false,
+        error: "File size exceeds the 10MB limit. Please upload a smaller file."
+      };
+    }
+    
+    // Convert file to buffer for processing
+    const buffer = await file.arrayBuffer();
+    const fileData = new Uint8Array(buffer);
+    
+    // Convert binary data to base64 for Gemini API
+    const base64Data = Buffer.from(fileData).toString('base64');
+    
+    // Initialize Gemini model for validation
+    const validationModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // Create a simplified schema for validation
+    const validationSchema = {
+      isResume: true,
+      pageCount: 2,
+      reasons: ["Contains contact information", "Lists work experience", "Shows education"]
+    };
+    
+    const validationPrompt = `
+      You are an expert resume validator responsible for determining whether uploaded PDFs contain valid resumes.
+      
+      TASK: Examine this PDF document and determine:
+      1. If it contains a professional resume/CV
+      2. The number of pages in the document
+      3. If the content follows standard resume formatting and structure
+      
+      CRITERIA FOR A VALID RESUME:
+      - Contains essential resume sections: contact information, work experience, education
+      - May also include: skills, projects, certifications, summary/objective
+      - Is formatted professionally and clearly organized
+      - Is typically 1-2 pages in length (although some specialized CVs may be longer)
+      - Contains career-related information for a specific individual
+      
+      NOT VALID RESUMES:
+      - Generic templates without filled personal information
+      - Academic papers, articles, or reports
+      - Blank pages, images, or corrupted documents
+      - Marketing materials or non-resume documents
+      
+      OUTPUT REQUIRED:
+      Provide your analysis in this exact JSON format with no additional text:
+      {
+        "isResume": boolean,        // true if this is a valid resume, false otherwise
+        "pageCount": number,        // the total number of pages in the document
+        "reasons": string[]         // 2-4 specific reasons for your determination
+      }
+    `;
+    
+    // Use Gemini model to validate the PDF
+    const result = await validationModel.generateContent({
+      contents: [
+        { 
+          role: "user", 
+          parts: [
+            { text: validationPrompt },
+            { 
+              inlineData: { 
+                mimeType: "application/pdf", 
+                data: base64Data 
+              } 
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 2048,
+      }
+    });
+    
+    // Process validation response
+    const response = result.response.text().trim();
+    
+    // Clean up response to ensure valid JSON
+    let cleanedResponse = response.replace(/```json\s*/g, "").replace(/```\s*/g, "");
+    
+    // Find the first { and last } to extract just the JSON object
+    const startIdx = cleanedResponse.indexOf('{');
+    const endIdx = cleanedResponse.lastIndexOf('}');
+    
+    if (startIdx >= 0 && endIdx >= 0 && endIdx > startIdx) {
+      cleanedResponse = cleanedResponse.substring(startIdx, endIdx + 1);
+    }
+    
+    // Parse the validation result
+    const validationResult = JSON.parse(cleanedResponse);
+    
+    if (!validationResult.isResume) {
+      return {
+        isValid: false,
+        error: "The uploaded file doesn't appear to be a resume. Please check your document and try again."
+      };
+    }
+    
+    if (validationResult.pageCount > 2) {
+      return {
+        isValid: false,
+        error: `The resume is ${validationResult.pageCount} pages. Please limit your resume to 1-2 pages for best results.`
+      };
+    }
+    
+    // If all checks pass
+    return { isValid: true };
+    
+  } catch (error) {
+    console.error("Error validating PDF:", error);
+    return {
+      isValid: false,
+      error: "Unable to validate the PDF. Please try a different file."
+    };
+  }
+}
+
+/**
  * Improved function to import PDF and extract resume data
  */
 export async function importPdf(formData: FormData): Promise<AppState> {
@@ -49,6 +183,12 @@ export async function importPdf(formData: FormData): Promise<AppState> {
     const isPdfValid = await isPdf(pdfFile);
     if (!isPdfValid) {
       throw new Error("Invalid PDF file");
+    }
+    
+    // Validate if it's a proper resume
+    const validationResult = await validateResumePdf(pdfFile);
+    if (!validationResult.isValid) {
+      throw new Error(validationResult.error);
     }
     
     // Convert file to buffer for processing
@@ -76,7 +216,7 @@ export async function importPdf(formData: FormData): Promise<AppState> {
             degree: "Bachelor of Science in Computer Science",
             location: "Stanford, CA",
             dates: "August 2018 - May 2022",
-            category: "Education",
+            category: "Relevant Coursework:",
             skills: "Algorithms, Data Structures, Machine Learning"
           }
         ],
@@ -129,33 +269,43 @@ export async function importPdf(formData: FormData): Promise<AppState> {
     
     // Create an improved prompt for the Gemini model
     const systemPrompt = `
-      Task: Extract structured resume data from this PDF.
+      You are a specialized resume parsing AI with expert knowledge in resume structure and formatting.
       
-      Instructions:
-      - Extract the person's full name, contact details, education, work experience, projects, and skills.
-      - For each job experience and project, extract bullet points describing responsibilities and achievements.
-      - Format dates as "Month Year - Month Year" or "Month Year - Present"
-      - Generate a random UUID as ID for each section item and bullet point.
-      - If information is missing or unclear, use an empty string.
-      - Format text case properly:
-        * For names and section titles (like "Experience", "Education", "Skills"), capitalize only the first letter of each word
-        * Convert all-uppercase text like "BEN SMITH" to proper case "Ben Smith"
-        * Convert all-uppercase section titles like "EXPERIENCE" to "Experience"
-        * Maintain capitalization for acronyms like "CEO", "AWS", "UI/UX", etc.
-      - For LinkedIn URLs:
-        * If you see a full URL (e.g., "linkedin.com/in/username"), extract just the username part
-        * If you see just a username, extract that
-        * Store only the username part in the contact.linkedin field (without "linkedin.com/in/")
-      - For GitHub URLs:
-        * If you see a full URL (e.g., "github.com/username"), extract just the username part
-        * If you see just a username, extract that
-        * Store only the username part in the contact.github field (without "github.com/")
-      - For websites, store the full URL including http:// or https:// if provided
-      - The output MUST be valid JSON that exactly matches the schema shown in the example below.
-      - DO NOT include any explanation or markdown formatting - return ONLY the JSON object.
-      - DO NOT include any final periods to sentences
+      TASK: Extract structured data from the provided resume PDF with high precision and organization.
       
-      Expected JSON format:
+      DETAILED INSTRUCTIONS:
+      1. PERSONAL INFORMATION
+         - Extract the person's full name
+         - Capture all contact details (phone, email, website, LinkedIn, GitHub)
+         - Format LinkedIn/GitHub as usernames only (remove "linkedin.com/in/" or "github.com/")
+         - For websites, include the full URL with http:// or https:// if available
+      
+      2. CONTENT SECTIONS 
+         - Extract all education entries (school, degree, location, dates)
+         - Extract all work experience (title, organization, location, dates)
+         - Extract all projects (name, technologies, dates)
+         - For each job and project, extract bullet points describing responsibilities/achievements
+         - When extracting dates, use consistent format: "Month Year - Month Year" or "Month Year - Present"
+      
+      3. DATA FORMATTING
+         - Generate a unique UUID as ID for each section item and bullet point
+         - Format all text in proper case:
+           * Names and titles: capitalize first letter of each word
+           * Convert ALL CAPS text to proper case
+           * Preserve acronyms (AWS, CEO, UI/UX)
+         - Remove final periods from bullet points
+         - If information is missing or unclear, use an empty string
+      
+      4. SECTION TITLES
+         - Identify and extract section titles as they appear in the resume
+         - Map to standard categories: Education, Experience, Projects, Skills, Additional Information
+      
+      OUTPUT FORMAT:
+      - The output MUST be valid JSON exactly matching the schema shown below
+      - DO NOT include any explanation, commentary, or markdown formatting
+      - Return ONLY the JSON object with no preamble or conclusion
+
+      EXAMPLE OUTPUT STRUCTURE:
       ${JSON.stringify(exampleOutput, null, 2)}
     `;
     
@@ -686,4 +836,39 @@ export function convertResumeContentToAppState(resumeContent: ResumeContent): Ap
 export async function importPdfAsResumeContent(formData: FormData): Promise<ResumeContent> {
   const appState = await parsePdf(formData);
   return convertAppStateToResumeContent(appState);
+}
+
+/**
+ * Server action to check if a file is a valid resume
+ */
+export async function checkIfResume(formData: FormData): Promise<{ isValid: boolean, error?: string }> {
+  try {
+    // Validate the file exists in the form data
+    const pdfFile = formData.get("file") as File;
+    if (!pdfFile) {
+      return {
+        isValid: false,
+        error: "No file provided"
+      };
+    }
+    
+    // Verify it's a PDF file
+    const isPdfValid = await isPdf(pdfFile);
+    if (!isPdfValid) {
+      return {
+        isValid: false,
+        error: "Invalid PDF file. Please upload a PDF document."
+      };
+    }
+    
+    // Use the existing validation function
+    return await validateResumePdf(pdfFile);
+    
+  } catch (error) {
+    console.error("Error checking if file is a resume:", error);
+    return {
+      isValid: false,
+      error: error instanceof Error ? error.message : "Unknown error validating the resume"
+    };
+  }
 }
